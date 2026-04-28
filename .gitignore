@@ -4,3 +4,4 @@ output/
 results/
 /qwen_math_sft/
 .env
+test/

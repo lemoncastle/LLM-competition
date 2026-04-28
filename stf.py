@@ -58,7 +58,14 @@ def main():
     from trl import SFTTrainer, SFTConfig
 
     dataset = load_dataset("json", data_files="./results/train1.jsonl", split="train")
-    dataset = dataset.select(range(min(800, len(dataset))))
+    splits = dataset.train_test_split(
+        test_size=0.1,
+        seed=42,
+        shuffle=True,
+    )
+
+    train_dataset = splits["train"]
+    eval_dataset = splits["test"]
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     if tokenizer.pad_token is None:
@@ -92,7 +99,6 @@ def main():
 
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
-
     training_args = SFTConfig(
         output_dir="./qwen_math_sft",
         per_device_train_batch_size=1,
@@ -108,20 +114,28 @@ def main():
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
 
-        max_length=2048,
+        max_length=8192, # could increase a little, but OOM maybe
         packing=False,
         assistant_only_loss=True,
 
+        eval_strategy="steps",
+        eval_steps=50,
         logging_steps=10,
         save_steps=150,
         save_total_limit=2,
+
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
+
         report_to="none",
     )
 
     trainer = SFTTrainer(
         model=model,
         args=training_args,
-        train_dataset=dataset,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
         processing_class=tokenizer,
     )
 
@@ -156,8 +170,8 @@ def main():
 
     print("Model loaded.")
 
-    # Build prompts for last 10 entries
-    test_data = public_data[-10:]
+    # Build prompts for last 50 entries
+    test_data = public_data[-50:]
     prompts = []
     for item in test_data:
         system, user = build_prompt(item["question"], item.get("options"))
