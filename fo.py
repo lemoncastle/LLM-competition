@@ -74,8 +74,8 @@ def main():
 
     print("Model loaded.")
 
-    # Build prompts for last 10 entries
-    test_data = public_data[-10:]
+    # Build prompts for last 50 entries
+    test_data = public_data[-50:]
     prompts = []
     for item in test_data:
         system, user = build_prompt(item["question"], item.get("options"))
