@@ -51,98 +51,6 @@ def main():
             return SYSTEM_PROMPT_MCQ, f"{question}\n\nOptions:\n{opts_text}"
         return SYSTEM_PROMPT_FRQ, question
 
-    import torch
-    from datasets import load_dataset
-    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-    from trl import SFTTrainer, SFTConfig
-
-    dataset = load_dataset("json", data_files="./results/train1.jsonl", split="train")
-    splits = dataset.train_test_split(
-        test_size=0.1,
-        seed=42,
-        shuffle=True,
-    )
-
-    train_dataset = splits["train"]
-    eval_dataset = splits["test"]
-
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=True,
-    )
-
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID,
-        trust_remote_code=True,
-        quantization_config=bnb_config,
-        device_map="auto",
-    )
-
-    # Important for QLoRA / k-bit training
-    model = prepare_model_for_kbit_training(model)
-
-    peft_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        lora_dropout=0.05,
-        bias="none",
-        task_type="CAUSAL_LM",
-        target_modules="all-linear",
-    )
-
-    model = get_peft_model(model, peft_config)
-    model.print_trainable_parameters()
-    training_args = SFTConfig(
-        output_dir="./qwen_math_sft",
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=16,
-        num_train_epochs=3,
-
-        learning_rate=1e-4,
-        warmup_ratio=0.03,
-        lr_scheduler_type="cosine",
-        optim="paged_adamw_8bit",
-
-        bf16=True,
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
-
-        max_length=8192, # could increase a little, but OOM maybe
-        packing=False,
-        assistant_only_loss=True,
-
-        eval_strategy="steps",
-        eval_steps=50,
-        logging_steps=10,
-        save_steps=150,
-        save_total_limit=2,
-
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
-
-        report_to="none",
-    )
-
-    trainer = SFTTrainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        processing_class=tokenizer,
-    )
-
-    trainer.train()
-    trainer.save_model("./qwen_math_sft/test")
-    tokenizer.save_pretrained("./qwen_math_sft/test")
-
     # load model
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
     tokenizer.pad_token = tokenizer.eos_token
@@ -152,6 +60,7 @@ def main():
         quantization="bitsandbytes",
         load_format="bitsandbytes",
         enable_prefix_caching=True,
+        enable_lora=True, # 
         gpu_memory_utilization=0.88,
         max_model_len=16384, # could increase a little, but watch out for OOM
         trust_remote_code=True,
@@ -185,7 +94,7 @@ def main():
 
     # Generate
     print(f"Generating responses for {len(prompts)} questions...")
-    outputs = llm.generate(prompts, sampling_params=sampling_params, lora_request=LoRARequest("math_sft", 1, "./qwen_math_sft/test"))
+    outputs = llm.generate(prompts, sampling_params=sampling_params, lora_request=LoRARequest("math_sft", 16, "./qwen_math_sft/test"))
 
     responses = [out.outputs[0].text.strip() for out in outputs]
 
@@ -204,10 +113,8 @@ def main():
 
         return ""
 
-
     def score_mcq(response: str, gold_letter: str) -> bool:
         return extract_letter(response) == gold_letter.strip().upper()
-
 
     # Load Judger for free-form scoring
     sys.path.insert(0, ".")

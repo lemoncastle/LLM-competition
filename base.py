@@ -9,7 +9,7 @@ def main():
     from vllm import LLM, SamplingParams
     from tqdm import tqdm
 
-    # MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
+    MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
     OUTPUT_PATH = "./results/fo.jsonl"
 
     # load dataset
@@ -48,11 +48,11 @@ def main():
         return SYSTEM_PROMPT_FRQ, question
 
     # load model
-    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-4B-Thinking-2507")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
     llm = LLM(
-        model="Qwen/Qwen3-4B-Thinking-2507",
+        model=MODEL_ID,
         quantization="bitsandbytes",
         load_format="bitsandbytes",
         enable_prefix_caching=True,
