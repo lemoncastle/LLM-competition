@@ -1,19 +1,23 @@
-def main():
-    import torch
-    from datasets import load_dataset
-    from trl import SFTTrainer, SFTConfig
-    from unsloth import FastLanguageModel
+import torch
+from datasets import load_dataset
+from unsloth import FastLanguageModel
+from trl import SFTTrainer, SFTConfig
 
-    dataset = load_dataset("json", data_files="./results/train1.jsonl", split="train")
+MODEL_NAME = "unsloth/Qwen3-4B-Thinking-2507"
+DATA_PATH = "./results/sft_train.jsonl"
+OUTPUT_DIR = "./qwen_math_sft"
+MAX_SEQ_LENGTH = 8192
+
+def load_data():
+    dataset = load_dataset("json", data_files=DATA_PATH, split="train")
     splits = dataset.train_test_split(test_size=0.1, seed=42, shuffle=True)
+    return splits["train"], splits["test"]
 
-    train_dataset = splits["train"]
-    eval_dataset = splits["test"]
-
-    MAX_SEQ_LENGTH = 8192
+def main():
+    train_dataset, eval_dataset = load_data()
 
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="unsloth/Qwen3-4B-Thinking-2507",
+        model_name=MODEL_NAME,
         max_seq_length=MAX_SEQ_LENGTH,
         dtype=torch.bfloat16,
         load_in_4bit=True,
@@ -22,9 +26,12 @@ def main():
     model = FastLanguageModel.get_peft_model(
         model,
         r=16,
-        target_modules="all-linear",
+        target_modules=[
+            "q_proj", "k_proj", "v_proj", "o_proj",
+            "gate_proj", "up_proj", "down_proj",
+        ],
         lora_alpha=32,
-        lora_dropout=0.05,
+        lora_dropout=0,
         bias="none",
         use_gradient_checkpointing="unsloth",
         random_state=42,
@@ -33,7 +40,7 @@ def main():
     model.print_trainable_parameters()
 
     training_args = SFTConfig(
-        output_dir="./qwen_math_sft",
+        output_dir=OUTPUT_DIR,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=16,
         num_train_epochs=3,
@@ -72,8 +79,8 @@ def main():
 
     trainer.train()
 
-    model.save_pretrained("./qwen_math_sft/test")
-    tokenizer.save_pretrained("./qwen_math_sft/test")
+    model.save_pretrained(OUTPUT_DIR + "/test")
+    tokenizer.save_pretrained(OUTPUT_DIR + "/test")
 
 if __name__ == "__main__":
-    main()  
+    main()

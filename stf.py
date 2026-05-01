@@ -1,55 +1,67 @@
 import os
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Optional
+
+from transformers import AutoTokenizer
+from vllm import LLM, SamplingParams
+from vllm.lora.request import LoRARequest
+from tqdm import tqdm
 
 os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
-def main():
-    import json
-    import re
-    import sys
-    from pathlib import Path
-    from typing import Optional
 
-    from transformers import AutoTokenizer
-    from vllm import LLM, SamplingParams
-    from vllm.lora.request import LoRARequest
-    from tqdm import tqdm
+MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
+OUTPUT_PATH = "./results/basesft.jsonl"
+DATA_PATH = "./data/public.jsonl"
+LORA_PATH = "./qwen_math_sft/test"
 
-    MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
-    OUTPUT_PATH = "./results/basesft.jsonl"
+# prompts for free response and MCQ problems
+SYSTEM_PROMPT_FRQ = (
+    "You are an expert mathematician. "
+    "Solve the problem carefully. "
+    "Use exact values unless a decimal is required. "
+    "Round final answers to 8 decimal places if needed. "
+    "Verify your result before answering. "
+    "After solving, output a final answer section only. "
+    "The final answer must be exactly one line in this form: Final: \\boxed{...}. "
+    "If there are multiple answers, put them all inside the same \\boxed{} separated by commas. "
+)
 
-    # load dataset
-    public_data = [json.loads(line) for line in open("./data/public.jsonl")]
+SYSTEM_PROMPT_MCQ = (
+    "You are an expert mathematician. "
+    "Solve the problem carefully and choose the single best answer. "
+    "Verify your result against the choices. "
+    "After solving, output exactly one final line and nothing else after it. "
+    "Final line format: Final: \\boxed{<letter>}. "
+)
 
-    n_mcq  = sum(bool(d.get("options")) for d in public_data)
-    n_free = sum(not d.get("options")   for d in public_data)
-    print(f"Loaded {len(public_data)} questions  ({n_mcq} MCQ, {n_free} free-form)")
-
-    # prompts for free response and MCQ problems
-    SYSTEM_PROMPT_FRQ = (
-        "You are an expert mathematician. "
-        "Solve the problem carefully. "
-        "Use exact values unless a decimal is required. "
-        "Round final answers to 8 decimal places if needed. "
-        "Verify your result before answering. "
-        "After solving, output a final answer section only. "
-        "The final answer must be exactly one line in this form: Final: \\boxed{...}. "
-        "If there are multiple answers, put them all inside the same \\boxed{} separated by commas. "
-    )
-
-    SYSTEM_PROMPT_MCQ = (
-        "You are an expert mathematician. "
-        "Solve the problem carefully and choose the single best answer. "
-        "Verify your result against the choices. "
-        "After solving, output exactly one final line and nothing else after it. "
-        "Final line format: Final: \\boxed{<letter>}. "
-    )
-
-    def build_prompt(question: str, options: Optional[list]) -> tuple[str, str]:
+# I didn't define these
+def build_prompt(question: str, options: Optional[list]) -> tuple[str, str]:
         """ determine if free response or MCQ problem and return (system_prompt, user_prompt)"""
         if options:
             labels    = [chr(65 + i) for i in range(len(options))]
             opts_text = "\n".join(f"{lbl}. {opt.strip()}" for lbl, opt in zip(labels, options))
             return SYSTEM_PROMPT_MCQ, f"{question}\n\nOptions:\n{opts_text}"
         return SYSTEM_PROMPT_FRQ, question
+def extract_letter(text: str) -> str:
+        matches = re.findall(r"\\boxed\{([A-Za-z])\}", text)
+        if matches:
+            return matches[-1].upper()
+        m = re.search(r"answer\s+is\s+([A-Za-z])", text, re.IGNORECASE)
+        if m:
+            return m.group(1).upper()
+        m = re.search(r"^\s*([A-Z])\s*$", text.strip(), re.MULTILINE)
+        if m:
+            return m.group(1).upper()
+        return ""
+def score_mcq(response: str, gold_letter: str) -> bool:
+    return extract_letter(response) == gold_letter.strip().upper()
+
+def main():
+    public_data = [json.loads(line) for line in open(DATA_PATH)]
+    print(f"Loaded {len(public_data)} questions from {DATA_PATH}")
 
     # load model
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
@@ -94,27 +106,9 @@ def main():
 
     # Generate
     print(f"Generating responses for {len(prompts)} questions...")
-    outputs = llm.generate(prompts, sampling_params=sampling_params, lora_request=LoRARequest("math_sft", 16, "./qwen_math_sft/test"))
+    outputs = llm.generate(prompts, sampling_params=sampling_params, lora_request=LoRARequest("math_sft", 16, LORA_PATH))
 
     responses = [out.outputs[0].text.strip() for out in outputs]
-
-    def extract_letter(text: str) -> str:
-        matches = re.findall(r"\\boxed\{([A-Za-z])\}", text)
-        if matches:
-            return matches[-1].upper()
-
-        m = re.search(r"answer\s+is\s+([A-Za-z])", text, re.IGNORECASE)
-        if m:
-            return m.group(1).upper()
-
-        m = re.search(r"^\s*([A-Z])\s*$", text.strip(), re.MULTILINE)
-        if m:
-            return m.group(1).upper()
-
-        return ""
-
-    def score_mcq(response: str, gold_letter: str) -> bool:
-        return extract_letter(response) == gold_letter.strip().upper()
 
     # Load Judger for free-form scoring
     sys.path.insert(0, ".")
