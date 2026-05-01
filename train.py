@@ -6,7 +6,7 @@ from trl import SFTTrainer, SFTConfig
 MODEL_NAME = "unsloth/Qwen3-4B-Thinking-2507"
 DATA_PATH = "./results/sft_train.jsonl"
 OUTPUT_DIR = "./qwen_math_sft"
-MAX_SEQ_LENGTH = 8192
+MAX_SEQ_LENGTH = 2048 # gen responses have 8-16k tokens (but OOM rip)
 
 def load_data():
     dataset = load_dataset("json", data_files=DATA_PATH, split="train")
@@ -29,7 +29,7 @@ def main():
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
             "gate_proj", "up_proj", "down_proj",
-        ],
+            ],
         lora_alpha=32,
         lora_dropout=0,
         bias="none",
@@ -42,7 +42,7 @@ def main():
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
         per_device_train_batch_size=1,
-        gradient_accumulation_steps=16,
+        gradient_accumulation_steps=8, # try 16
         num_train_epochs=3,
 
         learning_rate=1e-4,
@@ -68,13 +68,34 @@ def main():
 
         report_to="none",
     )
+    # I have no idea how this works so the llm did the work 
+    def formatting_func(examples):
+        # Case 1: Unsloth passes a single row
+        if isinstance(examples["messages"], list) and isinstance(examples["messages"][0], dict):
+            return [
+                tokenizer.apply_chat_template(
+                    examples["messages"],
+                    tokenize=False,
+                    add_generation_prompt=False,
+                )
+            ]
 
+        # Case 2: Unsloth passes a batch
+        return [
+            tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=False,
+            )
+            for messages in examples["messages"]
+        ]
     trainer = SFTTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         processing_class=tokenizer,
+        formatting_func=formatting_func,
     )
 
     trainer.train()
