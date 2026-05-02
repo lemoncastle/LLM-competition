@@ -10,7 +10,7 @@ MAX_SEQ_LENGTH = 16384 # gen responses have 8-16k tokens (but OOM rip) # 8192 or
 
 def load_data():
     dataset = load_dataset("json", data_files=DATA_PATH, split="train")
-    splits = dataset.train_test_split(test_size=0.1, seed=42, shuffle=True)
+    splits = dataset.train_test_split(test_size=0.05, seed=42, shuffle=True)
     return splits["train"], splits["test"]
 
 def main():
