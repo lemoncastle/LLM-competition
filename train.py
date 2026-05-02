@@ -25,11 +25,11 @@ def main():
 
     model = FastLanguageModel.get_peft_model(
         model,
-        r=16,
+        r=16, # try 8 0r 32
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
             "gate_proj", "up_proj", "down_proj",
-            ],
+            ], # try with just ["q_proj","k_proj","v_proj","o_proj"]
         lora_alpha=32,
         lora_dropout=0,
         bias="none",
@@ -57,7 +57,7 @@ def main():
         assistant_only_loss=True,
 
         eval_strategy="steps",
-        eval_steps=50,
+        eval_steps=100,
         logging_steps=10,
         save_steps=150,
         save_total_limit=2,
