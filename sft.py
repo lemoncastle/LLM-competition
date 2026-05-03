@@ -13,7 +13,7 @@ from tqdm import tqdm
 os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 
 MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
-OUTPUT_PATH = "./results/basesft.jsonl"
+OUTPUT_PATH = "./results/basesft_real.jsonl"
 DATA_PATH = "./data/public.jsonl"
 LORA_PATH = "./qwen_math_sft/test"
 
@@ -23,10 +23,9 @@ SYSTEM_PROMPT_FRQ = (
     "Solve the problem carefully. "
     "Use exact values unless a decimal is required. "
     "Round final answers to 8 decimal places if needed. "
-    "Verify your result before answering. "
-    "After solving, output a final answer section only. "
-    "The final answer must be exactly one line in this form: Final: \\boxed{...}. "
-    "If there are multiple answers, put them all inside the same \\boxed{} separated by commas. "
+    "Verify your result briefly before answering. "
+    "The final answer one line in this form: Final: \\boxed{...}. "
+    "If there are multiple answers, output them in order inside one box separated by commas. "
 )
 
 SYSTEM_PROMPT_MCQ = (
