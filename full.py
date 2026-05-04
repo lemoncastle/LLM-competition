@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 import csv
+import time
 
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
@@ -138,6 +139,7 @@ def main():
                 })
 
     print(f"Saved {len(batch)} more. Total completed: {len(done_ids) + start + len(batch)}")
+    time.sleep(300)  # 300 seconds = 5 minutes, to not overheat gpu during generation
 
 if __name__ == "__main__":
     main()
