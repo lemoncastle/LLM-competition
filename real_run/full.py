@@ -1,3 +1,8 @@
+# the full real run on the private test set using trained adaptor. Generates responses in batches and saves to CSV, keeping track of completed IDs to allow for resuming if interrupted.
+# 
+# change temperature, tokens and prompts if needed
+# sleeps 5 minutes at end of each batch of 50 to avoid gpu overheating (since running locally)
+
 import os
 import json
 import re

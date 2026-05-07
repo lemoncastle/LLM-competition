@@ -1,3 +1,6 @@
+# file to train the model using the generated SFT data
+# other stats found here like data used, hardware, training time etc..
+
 import torch
 from datasets import load_dataset
 from unsloth import FastLanguageModel

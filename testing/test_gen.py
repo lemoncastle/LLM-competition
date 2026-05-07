@@ -25,7 +25,6 @@ def calculate_percentage(results):
 
     return mcq_percentage, frq_percentage, mcq_correct, mcq_total, frq_correct, frq_total
 
-
 # Call the function to calculate the percentages
 mcq_percentage, frq_percentage, mcq_correct, mcq_total, frq_correct, frq_total = calculate_percentage(results)
 
