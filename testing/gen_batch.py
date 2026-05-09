@@ -89,7 +89,7 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
             thinking = getattr(response.choices[0].message, "reasoning_content", None)
             answer = response.choices[0].message.content
 
-            full_response = f"<think>\n{thinking or ''}\n</think>\n\n{answer}"
+            full_response = f"<think>\n{thinking}\n</think>\n\n{answer}"
 
             result = {
                 "index": question_id,
@@ -104,8 +104,7 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
         except Exception as e:
             result = {
                 "index": i,
-                "question": question,
-                "error": str(e),
+                "error": "ErrorTornado"
             }
             print(f"Question {i} failed: {e}")
 
