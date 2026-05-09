@@ -80,7 +80,7 @@ def main():
     )
 
     sampling_params = SamplingParams(
-        max_tokens=12288, # was 32768 (could increase a little)
+        max_tokens=16384, # was 32768 (could increase a little)
         temperature=0.6, # Qwen recommends this for thinking
         top_p=0.95,
         top_k=20,
@@ -91,7 +91,7 @@ def main():
     print("Model loaded.")
 
     # Build prompts for last 50 entries
-    test_data = public_data[-5:]
+    test_data = public_data[-50:]
     prompts = []
     for item in test_data:
         system, user = build_prompt(item["question"], item.get("options"))
