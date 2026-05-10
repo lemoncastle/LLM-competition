@@ -129,6 +129,6 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
         out_f.write(json.dumps(result, ensure_ascii=False) + "\n")
         out_f.flush()
 
-        time.sleep(8)  # Sleep to be nice to API 
+        time.sleep(5)  # Sleep to be nice to API 
 
 print("Batch processing completed.")

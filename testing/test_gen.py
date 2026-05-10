@@ -60,6 +60,7 @@ for item, response in tqdm(zip(test_data, output_data), total=len(test_data), de
     is_mcq = bool(item.get("options"))
     gold   = item["answer"]
     question = item["question"]
+    options = item.get("options")  # Get the options if exist
     response = response["messages"][1]["content"]
 
     if is_mcq:
@@ -75,14 +76,29 @@ for item, response in tqdm(zip(test_data, output_data), total=len(test_data), de
         except Exception:
             correct = False
     
-    results.append({
+    result = {
         "id":       item.get("id"),
         "is_mcq":   is_mcq,
         "gold":     gold,
         "question": question,
         "response": response,
         "correct":  correct,
-    })
+    }
+    
+    # Insert options right after question for MCQ questions
+    if is_mcq and options is not None:
+        ordered_result = {}
+        ordered_result["id"] = item.get("id")
+        ordered_result["is_mcq"] = is_mcq
+        ordered_result["gold"] = gold
+        ordered_result["question"] = question
+        ordered_result["options"] = options
+        ordered_result["response"] = response
+        
+        ordered_result["correct"] = correct
+        result = ordered_result
+    
+    results.append(result)
 
 print(f"Scoring complete. {len(results)} results.")
 mcq_res  = [r for r in results if r["is_mcq"]]
