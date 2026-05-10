@@ -3,6 +3,7 @@ import json
 import time
 from typing import Optional
 import random
+from datetime import datetime
 from openai import OpenAI, RateLimitError, APIError, APITimeoutError
 from dotenv import load_dotenv
 from pathlib import Path
@@ -58,7 +59,7 @@ def call_with_retries(system_prompt, user_prompt, max_retries=5):
                 temperature=0,
                 max_tokens=8192,
                 extra_body={"thinking": {"type": "enabled"}},
-                timeout=300,
+                timeout=500,
             )
 
         except (RateLimitError, APITimeoutError, APIError) as e:
@@ -80,6 +81,7 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
         question = row["question"]
         options = row.get("options")
         question_id = row.get("id")
+        s = datetime.now()
 
         system_prompt, user_prompt = build_prompt(question, options)
 
@@ -99,7 +101,7 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
                 ],
             }
 
-            print(f"Question {i} saved successfully.")
+            print(f"Question {i} saved in {datetime.now() - s} seconds")
 
         except Exception as e:
             result = {
@@ -111,6 +113,6 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
         out_f.write(json.dumps(result, ensure_ascii=False) + "\n")
         out_f.flush()
 
-        time.sleep(20)
+        time.sleep(60)
 
 print("Batch processing completed.")
