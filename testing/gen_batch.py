@@ -1,3 +1,6 @@
+# Batch generation script for public dataset using DeepSeek API
+# runs at 50 questions per hour can take 30+ hours for full set.
+# designed to be resumable by comparing ID's if output already exists
 import os
 import json
 import time
@@ -57,9 +60,9 @@ def call_with_retries(system_prompt, user_prompt, max_retries=5):
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0,
-                max_tokens=8192,
+                max_tokens=16384,
                 extra_body={"thinking": {"type": "enabled"}},
-                timeout=500,
+                timeout=700,
             )
 
         except (RateLimitError, APITimeoutError, APIError) as e:
@@ -75,12 +78,25 @@ def call_with_retries(system_prompt, user_prompt, max_retries=5):
 
 MODEL = "deepseek-v4-pro"
 
+done_ids = set()
+if Path("./results/batch_output.jsonl").exists():
+    with open("./results/batch_output.jsonl", "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                done_ids.add(json.loads(line)["index"])
+print(f"Already processed {len(done_ids)} questions. Resuming...")
+
 # Process all questions and save as JSONL
 with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
     for i, row in enumerate(public_data):
+        question_id = row.get("id")
+        if question_id in done_ids:
+            print(f"Skipping question {question_id} (already processed)")
+            continue
+
         question = row["question"]
         options = row.get("options")
-        question_id = row.get("id")
+
         s = datetime.now()
 
         system_prompt, user_prompt = build_prompt(question, options)
@@ -101,18 +117,18 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
                 ],
             }
 
-            print(f"Question {i} saved in {datetime.now() - s} seconds")
+            print(f"Question {question_id} saved in {datetime.now() - s} seconds")
 
         except Exception as e:
             result = {
-                "index": i,
+                "index": question_id,
                 "error": "ErrorTornado"
             }
-            print(f"Question {i} failed: {e}")
+            print(f"Question {question_id} failed: {e}")
 
         out_f.write(json.dumps(result, ensure_ascii=False) + "\n")
         out_f.flush()
 
-        time.sleep(60)
+        time.sleep(8)  # Sleep to be nice to API 
 
 print("Batch processing completed.")
