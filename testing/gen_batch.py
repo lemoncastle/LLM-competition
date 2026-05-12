@@ -36,7 +36,7 @@ SYSTEM_PROMPT_FRQ = (
 SYSTEM_PROMPT_MCQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Use the answer choices to determine the correct option. "
-    "Put your final answer inside \\boxed{}. "
+    "Put your final answer inside \\boxed{<letter}. "
 )
 
 FRQ_TEMPLATE = """Problem: {question}"""
@@ -91,7 +91,6 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
     for i, row in enumerate(public_data):
         question_id = row.get("id")
         if question_id in done_ids:
-            print(f"Skipping question {question_id} (already processed)")
             continue
 
         question = row["question"]

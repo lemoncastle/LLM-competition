@@ -1,5 +1,12 @@
 # file to train the model using the generated SFT data
+
 # other stats found here like data used, hardware, training time etc..
+
+# notes 
+# general sft trainer using trl https://huggingface.co/docs/trl/sft_trainer
+# https://unsloth.ai/docs/get-started/fine-tuning-llms-guide
+# https://unsloth.ai/docs/get-started/fine-tuning-llms-guide/lora-hyperparameters-guide
+# https://unsloth.ai/docs/basics/inference-and-deployment/vllm-guide
 
 import torch
 from datasets import load_dataset
@@ -28,12 +35,12 @@ def main():
 
     model = FastLanguageModel.get_peft_model(
         model,
-        r=16, # try 8 0r 32
+        r=32, # try 32 (more training parameters, more VRAM)
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
             "gate_proj", "up_proj", "down_proj",
             ], # try with just ["q_proj","k_proj","v_proj","o_proj"]
-        lora_alpha=32,
+        lora_alpha=32, # r or 2*r
         lora_dropout=0,
         bias="none",
         use_gradient_checkpointing="unsloth",
@@ -44,26 +51,28 @@ def main():
 
     training_args = SFTConfig(
         output_dir=OUTPUT_DIR,
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=8, # try 16
+        # batch_size * gradient_accumulation_steps = effective batch size, so 16
+        # order matters here so large batch size better but can OOM 
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=8,
         num_train_epochs=1.5,
 
-        learning_rate=1e-4,
+        learning_rate=2e-4, # or 5e-6 
         warmup_ratio=0.03,
-        lr_scheduler_type="cosine",
+        lr_scheduler_type="cosine", # or linear
         optim="adamw_8bit",
 
         bf16=True,
 
         max_length=MAX_SEQ_LENGTH,
-        packing=False,
+        packing=True, # pack multiple samples into one sequence to better utilize VRAM (try with and without)
         assistant_only_loss=True,
 
         eval_strategy="steps",
-        eval_steps=200,
+        eval_steps=100,
         logging_steps=30,
-        save_steps=200,
-        save_total_limit=2,
+        save_steps=100,
+        save_total_limit=3,
 
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
@@ -92,6 +101,7 @@ def main():
             )
             for messages in examples["messages"]
         ]
+
     trainer = SFTTrainer(
         model=model,
         args=training_args,
