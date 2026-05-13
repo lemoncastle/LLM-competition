@@ -11,7 +11,7 @@ with open('./results/modified_answers.jsonl', 'r', encoding='utf-8') as f:
 
 # Read, update, and write batch file
 entries = []
-with open('./results/batch_output.jsonl', 'r', encoding='utf-8') as f:
+with open('./results/batch_output_roll.jsonl', 'r', encoding='utf-8') as f:
     for line in f:
         if line.strip():
             entry = json.loads(line)
