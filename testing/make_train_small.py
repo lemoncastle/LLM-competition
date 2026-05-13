@@ -9,7 +9,7 @@ def main():
         data_files="./results/math/*.parquet",
     )
 
-    sampled = dataset["train"].shuffle(seed=42).select(range(5000))
+    sampled = dataset["train"].shuffle(seed=42).select(range(1000))
 
     with open("./results/train.jsonl", "w", encoding="utf-8") as f:
         for example in sampled:
