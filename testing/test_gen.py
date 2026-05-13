@@ -8,7 +8,7 @@ from tqdm import tqdm
 from pathlib import Path
 
 public_data = [json.loads(line) for line in open("./data/public.jsonl")]
-output_data = [json.loads(line) for line in open("./results/batch_output.jsonl")]
+output_data = [json.loads(line) for line in open("./results/batch_output_roll.jsonl")]
 
 # Create lookup dictionary for outputs by index
 output_by_id = {}
