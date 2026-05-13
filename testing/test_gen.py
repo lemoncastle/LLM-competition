@@ -116,11 +116,11 @@ print(f"  Overall    : {sum(r['correct'] for r in results):4d} / {len(results):4
 print("=" * 50)
 
 # Save all results as JSONL
-output_path = "./results/evaluation_results.jsonl"
-with open(output_path, "w", encoding="utf-8") as f:
-    for result in results:
-        f.write(json.dumps(result, ensure_ascii=False) + "\n")
-print(f"All results saved to {output_path}")
+# output_path = "./results/evaluation_results.jsonl"
+# with open(output_path, "w", encoding="utf-8") as f:
+#     for result in results:
+#         f.write(json.dumps(result, ensure_ascii=False) + "\n")
+# print(f"All results saved to {output_path}")
 
 # Save only incorrect results as JSONL
 incorrect_path = "./results/incorrect_results.jsonl"
@@ -129,10 +129,3 @@ with open(incorrect_path, "w", encoding="utf-8") as f:
         if not result["correct"]:  # Only save incorrect ones
             f.write(json.dumps(result, ensure_ascii=False) + "\n")
 print(f"Incorrect results saved to {incorrect_path} ({(len(results) - sum(r['correct'] for r in results))} items)")
-
-# Optional: Also save as JSON for easy viewing
-incorrect_json_path = "./results/incorrect_results.json"
-incorrect_only = [r for r in results if not r["correct"]]
-with open(incorrect_json_path, "w", encoding="utf-8") as f:
-    json.dump(incorrect_only, f, indent=2, ensure_ascii=False)
-print(f"Incorrect results (JSON) saved to {incorrect_json_path}")
