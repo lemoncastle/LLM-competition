@@ -90,8 +90,8 @@ def generate_question_by_id(question_id: int):
     return full_response, correct
 
 def main():
-    # You can change this to any ID you want
-    question_id = 159
+    user_input = input("Enter question ID: ").strip()
+    question_id = int(user_input) # Convert input to integer
     
     result = generate_question_by_id(question_id)
     print(result[0])

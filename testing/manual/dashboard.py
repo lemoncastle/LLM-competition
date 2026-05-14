@@ -108,7 +108,7 @@ html = """
             font-size: 14px;
             resize: vertical;
             background: #F5F5F5;
-            font-family: monospace;
+            
         }
         .status { 
             display: inline-block; 
@@ -119,26 +119,22 @@ html = """
             font-size: 12px;
         }
         .status-success { background-color: #d4f0e0; color: #2d6a4f; }
-        .nav-info {
-            text-align: center;
-            margin: 15px 0;
-            font-size: 14px;
-            padding: 8px;
-            background: #f0ede8;
-            border-radius: 30px;
-            color: #6b5b4f;
-            font-weight: 500;
-        }
         .fix-label {
             font-weight: bold;
             margin: 6px 0 3px 0;
             color: #8b7a6b;
             font-size: 12px;
         }
+        .nav-info {
+            font-size: 12px;
+            font-weight: normal;
+            background: rgba(255,255,255,0.3);
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
-    <div class="nav-info" id="navInfo"></div>
     <div id="items"></div>
     <div style="text-align: center; margin-top: 20px;">
         <button class="btn-save-all" onclick="saveAndExit()">Save Modified Answers & Exit</button>
@@ -165,14 +161,13 @@ html = """
         function renderItem() {
             const item = items[currentIndex];
             const modified = items.filter(i => i.modified_answer && i.modified_answer !== i.original_response).length;
-            const navInfo = document.getElementById('navInfo');
-            navInfo.innerHTML = `Item ${currentIndex + 1} of ${items.length} | Modified: ${modified}/${items.length}`;
             
             const div = document.getElementById('items');
             div.innerHTML = `
                 <div class="item">
                     <div class="header">
-                        <strong>Item ID: ${escapeHtml(String(item.id))}</strong> | Type: ${item.is_mcq ? 'MCQ' : 'FRQ'}
+                        <span><strong>Item ID: ${escapeHtml(String(item.id))}</strong> | Type: ${item.is_mcq ? 'MCQ' : 'FRQ'}</span>
+                        <span class="nav-info">Item ${currentIndex + 1} of ${items.length} | Modified: ${modified}/${items.length}</span>
                     </div>
                     <div class="question">
                         <p>Question:</p>
@@ -307,10 +302,6 @@ html = """
                         <p style="color: #8b7a6b;">Format: {"index": N, "question": "...", "answer": "..."} per line</p>
                     </div>
                 `;
-            }
-            const navInfo = document.getElementById('navInfo');
-            if (navInfo) {
-                navInfo.innerHTML = 'Complete!';
             }
         }
         
