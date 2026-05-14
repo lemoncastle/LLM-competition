@@ -47,7 +47,7 @@ def generate_question_by_id(question_id: int):
             "You are an expert mathematician. Solve the problem step-by-step. "
             "Put your final answer inside \\boxed{}. "
             "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}. "
-            "If a part has multiple values, group those values in parentheses. "
+            # "If a part has multiple values, group those values in parentheses. "
         )
         user_content = question
 

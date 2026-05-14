@@ -123,9 +123,26 @@ print("=" * 50)
 # print(f"All results saved to {output_path}")
 
 # Save only incorrect results as JSONL
+# skip responses with 'dinoskip' as they are not really incorrect but intentionally skipped
 incorrect_path = "./results/incorrect_results.jsonl"
 with open(incorrect_path, "w", encoding="utf-8") as f:
     for result in results:
-        if not result["correct"]:  # Only save incorrect ones
+        # Only save incorrect ones where response is NOT 'dinoskip'
+        if not result["correct"] and result.get("response") != "dinoskip":
             f.write(json.dumps(result, ensure_ascii=False) + "\n")
-print(f"Incorrect results saved to {incorrect_path} ({(len(results) - sum(r['correct'] for r in results))} items)")
+
+# Calculate count for print statement
+incorrect_count = sum(1 for r in results if not r["correct"] and r.get("response") != "dinoskip")
+print(f"Incorrect results saved to {incorrect_path} ({incorrect_count} items)")
+
+# Save only 'dinoskip' responses as JSONL
+dinoskip_path = "./results/dinoskip_results.jsonl"
+dinoskip_count = 0
+
+with open(dinoskip_path, "w", encoding="utf-8") as f:
+    for result in results:
+        if result.get("response") == "dinoskip":  # Only save those with 'dinoskip' response
+            f.write(json.dumps(result, ensure_ascii=False) + "\n")
+            dinoskip_count += 1
+
+print(f"Dinoskip results saved to {dinoskip_path} ({dinoskip_count} items)")
