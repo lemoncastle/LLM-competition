@@ -124,16 +124,16 @@ print("=" * 50)
 
 # Save only incorrect results as JSONL
 # skip responses with 'dinoskip' as they are not really incorrect but intentionally skipped
-incorrect_path = "./results/incorrect_results.jsonl"
-with open(incorrect_path, "w", encoding="utf-8") as f:
-    for result in results:
-        # Only save incorrect ones where response is NOT 'dinoskip'
-        if not result["correct"] and result.get("response") != "dinoskip":
-            f.write(json.dumps(result, ensure_ascii=False) + "\n")
+# incorrect_path = "./results/incorrect_results.jsonl"
+# with open(incorrect_path, "w", encoding="utf-8") as f:
+#     for result in results:
+#         # Only save incorrect ones where response is NOT 'dinoskip'
+#         if not result["correct"] and result.get("response") != "dinoskip":
+#             f.write(json.dumps(result, ensure_ascii=False) + "\n")
 
-# Calculate count for print statement
-incorrect_count = sum(1 for r in results if not r["correct"] and r.get("response") != "dinoskip")
-print(f"Incorrect results saved to {incorrect_path} ({incorrect_count} items)")
+# # Calculate count for print statement
+# incorrect_count = sum(1 for r in results if not r["correct"] and r.get("response") != "dinoskip")
+# print(f"Incorrect results saved to {incorrect_path} ({incorrect_count} items)")
 
 # Save only 'dinoskip' responses as JSONL
 dinoskip_path = "./results/dinoskip_results.jsonl"
@@ -145,4 +145,12 @@ with open(dinoskip_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(result, ensure_ascii=False) + "\n")
             dinoskip_count += 1
 
-print(f"Dinoskip results saved to {dinoskip_path} ({dinoskip_count} items)")
+print(f"dinoskip saved to {dinoskip_path} ({dinoskip_count} items)")
+
+# save correct and incorrect results as jsonl
+output_path2 = "./results/evaluation_results_.jsonl"
+with open(output_path2, "w", encoding="utf-8") as f:
+    for result in results:
+        if result.get("response") != "dinoskip":
+            f.write(json.dumps(result, ensure_ascii=False) + "\n")
+print(f"All non-dinoskip results saved to {output_path2} ({len(results) - dinoskip_count} items)")
