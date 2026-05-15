@@ -42,10 +42,11 @@ from judger import Judger
 
 judger = Judger(strict_extract=False)
 
-expected = ["-30.805227865014", "-0.194772134986033", "-0.122144504490262", "49.1221445044903", "ROOT", "ROOT", "EXTRANEOUS", "ROOT"]
+expected = ["(2+sqrt(480)", "2-sqrt(480))"]
 
 tests = [
-    r"\boxed{(31-\sqrt{937})/2, (31+\sqrt{937})/2, (49-5\sqrt{97})/2, (49+5\sqrt{97})/2, \text{ROOT}, \text{ROOT}, \text{EXTRANEOUS}, \text{ROOT}}",
+    r"\boxed{2+4\sqrt{30}, 2-4\sqrt{30}}"
+    
 ]
 
 for t in tests:
