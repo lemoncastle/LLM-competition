@@ -15,7 +15,7 @@ os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
 OUTPUT_PATH = "./results/basesft_real.jsonl"
 DATA_PATH = "./data/public.jsonl"
-LORA_PATH = "./qwen_math_sft/test(3)"
+# LORA_PATH = "./qwen_math_sft/test(3)"
 
 # prompts for free response and MCQ problems
 SYSTEM_PROMPT_FRQ = (
@@ -78,17 +78,17 @@ def main():
         quantization="bitsandbytes",
         load_format="bitsandbytes",
         enable_prefix_caching=True,
-        enable_lora=True,
-        max_lora_rank=32,
+        # enable_lora=True,
+        # max_lora_rank=32,
         gpu_memory_utilization=0.95,
-        max_model_len=24576, # could increase a little, but watch out for OOM
+        max_model_len=24576, # Maximum TOTAL context length (should be bigger than max_tokens)
         trust_remote_code=True,
         max_num_seqs=2, # could increase a little, but watch out for OOM
         max_num_batched_tokens=16384, # was 32768
     )
 
     sampling_params = SamplingParams(
-        max_tokens=16384, # was 32768 (could increase a little)
+        max_tokens=16384, # Maximum number of NEW tokens the model is allowed to generate.
         temperature=0.6, # Qwen recommends this for thinking
         top_p=0.95,
         top_k=20,
@@ -111,7 +111,7 @@ def main():
 
     # Generate
     print(f"Generating responses for {len(prompts)} questions...")
-    outputs = llm.generate(prompts, sampling_params=sampling_params, lora_request=LoRARequest("math_sft", 1, LORA_PATH))
+    outputs = llm.generate(prompts, sampling_params=sampling_params)
 
     responses = [out.outputs[0].text.strip() for out in outputs]
 
