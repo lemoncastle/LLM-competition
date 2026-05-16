@@ -18,13 +18,9 @@ DATA_PATH = "./results/sft_train.jsonl"
 OUTPUT_DIR = "./qwen_math_sft"
 MAX_SEQ_LENGTH = 16384 # gen responses have 8-16k tokens (but OOM rip) # 8192 or 16384
 
-def load_data():
-    dataset = load_dataset("json", data_files=DATA_PATH, split="train")
-    splits = dataset.train_test_split(test_size=0.05, seed=42, shuffle=True)
-    return splits["train"], splits["test"]
-
 def main():
-    train_dataset, eval_dataset = load_data()
+    train_dataset = load_dataset("json",data_files="./results/sft_train.jsonl",split="train",)
+    eval_dataset = load_dataset("json",data_files="./results/sft_eval.jsonl",split="train",)
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=MODEL_NAME,
@@ -53,8 +49,8 @@ def main():
         output_dir=OUTPUT_DIR,
         # batch_size * gradient_accumulation_steps = effective batch size, so 16
         # order matters here so large batch size better but can OOM 
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=8,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=16,
         num_train_epochs=1.5,
 
         learning_rate=2e-4, # or 5e-6 
@@ -69,9 +65,9 @@ def main():
         assistant_only_loss=True,
 
         eval_strategy="steps",
-        eval_steps=100,
-        logging_steps=30,
-        save_steps=100,
+        eval_steps=25,
+        save_steps=25,
+        logging_steps=5,
         save_total_limit=3,
 
         load_best_model_at_end=True,

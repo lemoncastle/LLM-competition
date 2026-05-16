@@ -83,7 +83,6 @@ def main():
 
     print("Model loaded.")
 
-
     # generate and save responses in batches, keeping track of which IDs have already been completed to allow for resuming if interrupted
     BATCH_SIZE = 50
     test_data = public_data

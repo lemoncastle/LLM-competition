@@ -61,6 +61,17 @@ def score_mcq(response: str, gold_letter: str) -> bool:
 def main():
     public_data = [json.loads(line) for line in open(DATA_PATH)]
     print(f"Loaded {len(public_data)} questions from {DATA_PATH}")
+    id_to_public = {item["id"]: item for item in public_data}
+    
+    test_data = []
+    with open("./results/sft_eval_id.jsonl", "r", encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            eval_id = row["id"]
+
+            test_data.append(id_to_public[eval_id])
+
+    print(f"Loaded {len(test_data)} held-out eval examples")
 
     # load model
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
@@ -90,14 +101,12 @@ def main():
 
     print("Model loaded.")
 
-    # Build prompts for last 50 entries
-    test_data = public_data[-50:]
     prompts = []
     for item in test_data:
         system, user = build_prompt(item["question"], item.get("options"))
         prompt_text = tokenizer.apply_chat_template(
             [{"role": "system", "content": system},
-            {"role": "user",   "content": user}],
+            {"role": "user", "content": user}],
             tokenize=False,
             add_generation_prompt=True,
         )
