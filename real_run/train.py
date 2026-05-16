@@ -49,9 +49,9 @@ def main():
         output_dir=OUTPUT_DIR,
         # batch_size * gradient_accumulation_steps = effective batch size, so 16
         # order matters here so large batch size better but can OOM 
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=16,
-        num_train_epochs=1.5,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=8,
+        num_train_epochs=3,
 
         learning_rate=2e-4, # or 5e-6 
         warmup_ratio=0.03,
@@ -65,9 +65,9 @@ def main():
         assistant_only_loss=True,
 
         eval_strategy="steps",
-        eval_steps=25,
-        save_steps=25,
-        logging_steps=5,
+        logging_steps=1,
+        eval_steps=5,
+        save_steps=5,
         save_total_limit=3,
 
         load_best_model_at_end=True,
@@ -87,7 +87,7 @@ def main():
                     add_generation_prompt=False,
                 )
             ]
-
+    
         # Case 2: Unsloth passes a batch
         return [
             tokenizer.apply_chat_template(
