@@ -80,15 +80,15 @@ def main():
         enable_prefix_caching=True,
         enable_lora=True,
         max_lora_rank=32,
-        gpu_memory_utilization=0.95,
-        max_model_len=24576, # could increase a little, but watch out for OOM
+        gpu_memory_utilization=0.88,
+        max_model_len=16384, # could increase a little, but watch out for OOM
         trust_remote_code=True,
         max_num_seqs=2, # could increase a little, but watch out for OOM
         max_num_batched_tokens=16384, # was 32768
     )
 
     sampling_params = SamplingParams(
-        max_tokens=16384, # was 32768 (could increase a little)
+        max_tokens=12288, # was 32768 (could increase a little)
         temperature=0.6, # Qwen recommends this for thinking
         top_p=0.95,
         top_k=20,
