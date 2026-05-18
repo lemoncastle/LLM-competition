@@ -36,7 +36,7 @@ SYSTEM_PROMPT_FRQ = (
 SYSTEM_PROMPT_MCQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Use the answer choices to determine the correct option. "
-    "Put your final answer inside \\boxed{<letter}. "
+    "Put your final answer inside \\boxed{<letter>}. "
 )
 
 FRQ_TEMPLATE = """Problem: {question}"""
