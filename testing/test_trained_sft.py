@@ -137,11 +137,12 @@ def main():
                 )
             except Exception:
                 correct = False
-
+        
         results.append({
             "id":       item.get("id"),
             "is_mcq":   is_mcq,
             "gold":     gold,
+            "question": user,
             "response": response,
             "correct":  correct,
         })

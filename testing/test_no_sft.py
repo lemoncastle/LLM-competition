@@ -139,6 +139,7 @@ def main():
             "id":       item.get("id"),
             "is_mcq":   is_mcq,
             "gold":     gold,
+            "question": user,
             "response": response,
             "correct":  correct,
         })
