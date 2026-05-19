@@ -16,7 +16,7 @@ from trl import SFTTrainer, SFTConfig
 MODEL_NAME = "unsloth/Qwen3-4B-Thinking-2507"
 DATA_PATH = "./results/sft_train.jsonl"
 OUTPUT_DIR = "./qwen_math_sft"
-MAX_SEQ_LENGTH = 16384 # gen responses have 8-16k tokens (but OOM rip) # 8192 or 16384
+MAX_SEQ_LENGTH = 16384 # gen responses have 8-16k tokens # 8192, 12000, 16384
 
 def main():
     train_dataset = load_dataset("json",data_files="./results/sft_train.jsonl",split="train",)
@@ -31,12 +31,12 @@ def main():
 
     model = FastLanguageModel.get_peft_model(
         model,
-        r=32, # try 32 (more training parameters, more VRAM)
+        r=16, # try 32 (more training parameters, more VRAM)
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
             "gate_proj", "up_proj", "down_proj",
             ], # try with just ["q_proj","k_proj","v_proj","o_proj"]
-        lora_alpha=32, # r or 2*r
+        lora_alpha=16, # r or 2*r
         lora_dropout=0,
         bias="none",
         use_gradient_checkpointing="unsloth",
@@ -51,9 +51,9 @@ def main():
         # order matters here so large batch size better but can OOM 
         per_device_train_batch_size=2,
         gradient_accumulation_steps=8,
-        num_train_epochs=3,
+        num_train_epochs=2,
 
-        learning_rate=2e-4, # or 5e-6 
+        learning_rate=5e-6, # or 5e-6 
         warmup_ratio=0.03,
         lr_scheduler_type="cosine", # or linear
         optim="adamw_8bit",
@@ -61,13 +61,13 @@ def main():
         bf16=True,
 
         max_length=MAX_SEQ_LENGTH,
-        packing=True, # pack multiple samples into one sequence to better utilize VRAM (try with and without)
+        packing=False, # pack multiple samples into one sequence to better utilize VRAM (try with and without)
         assistant_only_loss=True,
 
         eval_strategy="steps",
         logging_steps=1,
-        eval_steps=5,
-        save_steps=5,
+        eval_steps=10,
+        save_steps=10,
         save_total_limit=3,
 
         load_best_model_at_end=True,
