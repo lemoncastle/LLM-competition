@@ -15,7 +15,7 @@ os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
 OUTPUT_PATH = "./results/basesft_real.jsonl"
 DATA_PATH = "./data/public.jsonl"
-LORA_PATH = "./qwen_math_sft/test(3)"
+LORA_PATH = "./qwen_math_sft/test(5)"
 
 # prompts for free response and MCQ problems
 SYSTEM_PROMPT_FRQ = (
@@ -28,7 +28,7 @@ SYSTEM_PROMPT_FRQ = (
 SYSTEM_PROMPT_MCQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Use the answer choices to determine the correct option. "
-    "Put your final answer inside \\boxed{<letter}. "
+    "Put your final answer inside \\boxed{<letter>}. "
 )
 
 # I didn't define these
@@ -79,11 +79,11 @@ def main():
         load_format="bitsandbytes",
         enable_prefix_caching=True,
         enable_lora=True,
-        max_lora_rank=32,
+        # max_lora_rank=32,
         gpu_memory_utilization=0.88,
         max_model_len=16384, # could increase a little, but watch out for OOM
         trust_remote_code=True,
-        max_num_seqs=2, # could increase a little, but watch out for OOM
+        max_num_seqs=4, # could increase a little, but watch out for OOM
         max_num_batched_tokens=16384, # was 32768
     )
 
