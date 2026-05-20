@@ -55,7 +55,7 @@ def generate_question_by_id(question_id: int):
     print(f"Generating response for id {question_id}...")
     
     response = client.chat.completions.create(
-        model="deepseek-v4-flash",
+        model="deepseek-v4-pro",
         extra_body={"thinking": {"type": "enabled"}},
         max_tokens=16384,
         messages=[

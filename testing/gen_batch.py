@@ -20,17 +20,31 @@ client = OpenAI(
     base_url="https://api.deepseek.com",
 )
 
+OUTPUT_PATH = "./results/batch_dinoskip.jsonl"
+
 # Load dataset
 public_data = [json.loads(line) for line in open("./data/public.jsonl")]
+print(f"Loaded {len(public_data)} questions from {"./data/public.jsonl"}")
+id_to_public = {item["id"]: item for item in public_data}
 
-print(f"Loaded {len(public_data)} questions")
+test_data = []
+with open("./results/dinoskip_results.jsonl", "r", encoding="utf-8") as f:
+    for line in f:
+        row = json.loads(line)
+        eval_id = row["id"]
+
+        test_data.append(id_to_public[eval_id])
+
+public_data = test_data
+print(f"Loaded {len(public_data)} dinoskip and matched to public.")
+w = datetime.now()
 
 # Prompts
 SYSTEM_PROMPT_FRQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Put your final answer inside \\boxed{}. "
     "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
-    "If a part has multiple values, group those values in parentheses. "
+    # "If a part has multiple values, group those values in parentheses. "
 )
 
 SYSTEM_PROMPT_MCQ = (
@@ -59,10 +73,10 @@ def call_with_retries(system_prompt, user_prompt, max_retries=5):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0,
-                max_tokens=16384,
+                # temperature=0,
+                max_tokens = 32768, #24576
                 extra_body={"thinking": {"type": "enabled"}},
-                timeout=700,
+                timeout=1400,
             )
 
         except (RateLimitError, APITimeoutError, APIError) as e:
@@ -79,15 +93,15 @@ def call_with_retries(system_prompt, user_prompt, max_retries=5):
 MODEL = "deepseek-v4-pro"
 
 done_ids = set()
-if Path("./results/batch_output.jsonl").exists():
-    with open("./results/batch_output.jsonl", "r", encoding="utf-8") as f:
+if Path(OUTPUT_PATH).exists():
+    with open(OUTPUT_PATH, "r", encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 done_ids.add(json.loads(line)["index"])
 print(f"Already processed {len(done_ids)} questions. Resuming...")
 
 # Process all questions and save as JSONL
-with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
+with open(OUTPUT_PATH, "a", encoding="utf-8") as out_f:
     for i, row in enumerate(public_data):
         question_id = row.get("id")
         if question_id in done_ids:
@@ -130,4 +144,4 @@ with open("./results/batch_output.jsonl", "a", encoding="utf-8") as out_f:
 
         time.sleep(5)  # Sleep to be nice to API 
 
-print("Batch processing completed.")
+print(f"Batch processing completed {datetime.now() - w} seconds")
