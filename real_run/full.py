@@ -22,25 +22,20 @@ os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
 OUTPUT_PATH = "./results/submission.csv"
 DATA_PATH = "./data/private.jsonl"
-LORA_PATH = "./qwen_math_sft/test"
+LORA_PATH = "./qwen_math_sft/test(5)"
 
 # prompts for free response and MCQ problems
 SYSTEM_PROMPT_FRQ = (
-    "You are an expert mathematician. "
-    "Solve the problem carefully. "
-    "Use exact values unless a decimal is required. "
-    "Round final answers to 8 decimal places if needed. "
-    "Verify your result briefly before answering. "
-    "The final answer one line in this form: Final: \\boxed{...}. "
-    "If there are multiple answers, output them in order inside one box separated by commas. "
+    "You are an expert mathematician. Solve the problem step-by-step. "
+    "Put your final answer inside \\boxed{}. "
+    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
+    "If a part has multiple values, group those values in parentheses. "
 )
 
 SYSTEM_PROMPT_MCQ = (
-    "You are an expert mathematician. "
-    "Solve the problem carefully and choose the single best answer. "
-    "Verify your result against the choices. "
-    "After solving, output exactly one final line and nothing else after it. "
-    "Final line format: Final: \\boxed{<letter>}. "
+    "You are an expert mathematician. Solve the problem step-by-step. "
+    "Use the answer choices to determine the correct option. "
+    "Put your final answer inside \\boxed{<letter>}. "
 )
 
 def build_prompt(question: str, options: Optional[list]) -> tuple[str, str]:
@@ -65,15 +60,15 @@ def main():
         load_format="bitsandbytes",
         enable_prefix_caching=True,
         enable_lora=True, # 
-        gpu_memory_utilization=0.88,
-        max_model_len=16384, # could increase a little, but watch out for OOM
+        gpu_memory_utilization=0.95,
+        max_model_len=24576, # could increase a little, but watch out for OOM
         trust_remote_code=True,
         max_num_seqs=4, # could increase a little, but watch out for OOM
         max_num_batched_tokens=16384, # was 32768
     )
 
     sampling_params = SamplingParams(
-        max_tokens=12288, # was 32768 (could increase a little)
+        max_tokens=16384, # was 32768 (could increase a little)
         temperature=0.6, # Qwen recommends this for thinking
         top_p=0.95,
         top_k=20,
@@ -142,8 +137,8 @@ def main():
                     "response": response,
                 })
 
-    print(f"Saved {len(batch)} more. Total completed: {len(done_ids) + start + len(batch)}")
-    time.sleep(300)  # 300 seconds = 5 minutes, to not overheat gpu during generation
+    print(f"Total completed: {start + len(batch)}")
+    # time.sleep(300)  # 300 seconds = 5 minutes, to not overheat gpu during generation
 
 if __name__ == "__main__":
     main()
