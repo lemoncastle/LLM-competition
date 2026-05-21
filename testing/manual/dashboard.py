@@ -3,20 +3,55 @@ import webbrowser
 from pathlib import Path
 from datetime import datetime
 
+results_path = Path('./results/dinoskip_results.jsonl')
+
 # Load your incorrect results (for review)
-with open('./results/incorrect_results.jsonl', 'r', encoding='utf-8') as f:
+with open(results_path, 'r', encoding='utf-8') as f:
     incorrect_items = [json.loads(line) for line in f]
 
 # Prepare items data for review
+# Load already modified IDs (if file exists)
+modified_ids = set()
+modified_path = Path('./results/modified_answers.jsonl')
+
+if modified_path.exists():
+    with open(modified_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            try:
+                entry = json.loads(line)
+                modified_ids.add(entry.get('index'))
+            except:
+                pass
+
+# Prepare items data for review
 items_data = []
+count_skipped = 0
 for idx, item in enumerate(incorrect_items):
+    item_id = item.get('id', idx)
+
+    # Skip already modified items
+    if item_id in modified_ids:
+        count_skipped += 1
+        continue
+
     expected = item.get('gold', item.get('correct_answer', 'N/A'))
     if isinstance(expected, list):
         expected = ', '.join(expected)
     
     items_data.append({
-        'id': item.get('id', idx),
-        'question': item.get('question', 'N/A'),
+        'id': item_id,
+        'question': (
+            item.get('question', 'N/A') +
+            (
+                '<br>Options:<br>' +
+                ', '.join(
+                    f"{chr(65 + i)}. {opt}"
+                    for i, opt in enumerate(item.get('options', []))
+                )
+                if item.get('options')
+                else ''
+            )
+        ),
         'generated_answer': item.get('response', 'N/A'),
         'expected_answer': expected,
         'is_mcq': item.get('is_mcq', False),
@@ -97,7 +132,7 @@ html = """
         .btn-format { background-color: #b8d9c9; color: #2d5a41; }
         .btn-skip { background-color: #e8e0d8; color: #6b5b4f; }
         .btn-previous { background-color: #c9dde8; color: #3a6b8c; }
-        .btn-save-all { background-color: #d4c4e8; color: #4a3a6e; font-size: 15px; padding: 8px 20px; }
+        .btn-save-all { background-color: #d4c4e8; color: #4a3a6e; }
         textarea { 
             width: 100%; 
             height: 600px; 
@@ -136,9 +171,6 @@ html = """
 </head>
 <body>
     <div id="items"></div>
-    <div style="text-align: center; margin-top: 20px;">
-        <button class="btn-save-all" onclick="saveAndExit()">Save Modified Answers & Exit</button>
-    </div>
     
     <script>
         const items = ITEMS_PLACEHOLDER;
@@ -149,6 +181,7 @@ html = """
             if (!items[i].modified_answer) {
                 items[i].modified_answer = items[i].generated_answer;
             }
+            items[i].saved = false;
         }
         
         function escapeHtml(text) {
@@ -160,7 +193,7 @@ html = """
         
         function renderItem() {
             const item = items[currentIndex];
-            const modified = items.filter(i => i.modified_answer && i.modified_answer !== i.original_response).length;
+            const modified = items.filter(i => i.saved).length;
             
             const div = document.getElementById('items');
             div.innerHTML = `
@@ -171,7 +204,7 @@ html = """
                     </div>
                     <div class="question">
                         <p>Question:</p>
-                        <div>${escapeHtml(String(item.question))}</div>
+                        <div>${String(item.question)}</div>
                     </div>
                     <div class="expected">
                         <p>Expected (correct answer):</p>
@@ -181,10 +214,17 @@ html = """
                         <div class="fix-label">Modified Answer (edit if needed):</div>
                         <textarea id="modifiedAnswer" placeholder="Enter corrected answer...">${escapeHtml(String(item.modified_answer || item.generated_answer))}</textarea>
                         <br>
-                        <button class="btn-format" onclick="saveAndNext()">✓ Save & Next</button>
-                        <button class="btn-skip" onclick="skipAndNext()">⏭ Skip (keep original)</button>
-                        <button class="btn-previous" onclick="goToPrevious()">◀ Previous</button>
-                        <span id="status" class="status"></span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="btn-format" onclick="saveAndNext()">✓ Save & Next</button>
+                            <button class="btn-skip" onclick="skipAndNext()">⏭ Skip (keep original)</button>
+                            <button class="btn-previous" onclick="goToPrevious()">◀ Previous</button>
+
+                            <button class="btn-save-all" onclick="saveAndExit()" style="margin-left:auto;">
+                                Save & Exit
+                            </button>
+
+                            <span id="status" class="status"></span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -193,15 +233,11 @@ html = """
         function saveAndNext() {
             const modifiedAnswer = document.getElementById('modifiedAnswer').value;
             items[currentIndex].modified_answer = modifiedAnswer;
+            items[currentIndex].saved = true;
             
             const statusDiv = document.getElementById('status');
-            if (modifiedAnswer !== items[currentIndex].original_response) {
-                statusDiv.textContent = '✓ Modified answer saved';
-                statusDiv.className = 'status status-success';
-            } else {
-                statusDiv.textContent = '✓ No changes (same as original)';
-                statusDiv.className = 'status status-success';
-            }
+            statusDiv.textContent = '✓ Modified answer saved';
+            statusDiv.className = 'status status-success';
             
             setTimeout(() => {
                 if (currentIndex + 1 < items.length) {
@@ -255,9 +291,9 @@ html = """
                 items[currentIndex].modified_answer = modifiedAnswer.value;
             }
             
-            // Filter ONLY items that were modified (answer changed from original)
+            // Save answers regardless of modification
             const modifiedItems = items.filter(function(item) {
-                return item.modified_answer && item.modified_answer !== item.original_response;
+                return item.saved;
             });
             
             // Create output in jsonl format
@@ -320,5 +356,5 @@ output_path = Path('./review_dashboard.html')
 output_path.write_text(html, encoding='utf-8')
 webbrowser.open(output_path.absolute().as_uri())
 
-print(f"Dashboard opened with {len(incorrect_items)} items to review")
-print(f"Only answers you modify will be saved to 'modified_answers.jsonl'")
+print(f"{len(incorrect_items)} items loaded from {results_path}")
+print(f"{len(items_data)} items left to review with {count_skipped} already reviewed.")
