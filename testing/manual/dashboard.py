@@ -3,7 +3,8 @@ import webbrowser
 from pathlib import Path
 from datetime import datetime
 
-results_path = Path('./results/dinoskip_results.jsonl')
+results_path = Path('./results/evaluation_results.jsonl')
+modified_path = Path('./results/modified_answers.jsonl')
 
 # Load your incorrect results (for review)
 with open(results_path, 'r', encoding='utf-8') as f:
@@ -12,8 +13,6 @@ with open(results_path, 'r', encoding='utf-8') as f:
 # Prepare items data for review
 # Load already modified IDs (if file exists)
 modified_ids = set()
-modified_path = Path('./results/modified_answers.jsonl')
-
 if modified_path.exists():
     with open(modified_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -55,6 +54,7 @@ for idx, item in enumerate(incorrect_items):
         'generated_answer': item.get('response', 'N/A'),
         'expected_answer': expected,
         'is_mcq': item.get('is_mcq', False),
+        'correct': item.get('correct', False),
         'original_response': item.get('response', 'N/A'),
         'index': idx
     })
@@ -199,7 +199,11 @@ html = """
             div.innerHTML = `
                 <div class="item">
                     <div class="header">
-                        <span><strong>Item ID: ${escapeHtml(String(item.id))}</strong> | Type: ${item.is_mcq ? 'MCQ' : 'FRQ'}</span>
+                        <span>
+                            <strong>Item ID: ${escapeHtml(String(item.id))}</strong> |
+                            Type: ${item.is_mcq ? 'MCQ' : 'FRQ'} |
+                            Correct: ${item.correct ? 'True' : 'False'}
+                        </span>
                         <span class="nav-info">Item ${currentIndex + 1} of ${items.length} | Modified: ${modified}/${items.length}</span>
                     </div>
                     <div class="question">
