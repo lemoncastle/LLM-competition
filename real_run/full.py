@@ -28,14 +28,13 @@ LORA_PATH = "./qwen_math_sft/test(5)"
 SYSTEM_PROMPT_FRQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Put your final answer inside \\boxed{}. "
-    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
-    "If a part has multiple values, group those values in parentheses. "
+    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}"
 )
 
 SYSTEM_PROMPT_MCQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Use the answer choices to determine the correct option. "
-    "Put your final answer inside \\boxed{<letter>}. "
+    "Put your final answer inside \\boxed{<letter>}"
 )
 
 def build_prompt(question: str, options: Optional[list]) -> tuple[str, str]:
@@ -54,21 +53,24 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
     tokenizer.pad_token = tokenizer.eos_token
 
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    tokenizer.pad_token = tokenizer.eos_token
+        
     llm = LLM(
         model="Qwen/Qwen3-4B-Thinking-2507",
         quantization="bitsandbytes",
         load_format="bitsandbytes",
-        enable_prefix_caching=True,
-        enable_lora=True, # 
+        enable_prefix_caching=False,
+        enable_lora=True,
         gpu_memory_utilization=0.95,
-        max_model_len=24576, # could increase a little, but watch out for OOM
+        max_model_len=36767, # could increase a little, but watch out for OOM
         trust_remote_code=True,
-        max_num_seqs=4, # could increase a little, but watch out for OOM
+        max_num_seqs=8, # could increase a little, but watch out for OOM
         max_num_batched_tokens=16384, # was 32768
     )
-
+    
     sampling_params = SamplingParams(
-        max_tokens=16384, # was 32768 (could increase a little)
+        max_tokens=32768,
         temperature=0.6, # Qwen recommends this for thinking
         top_p=0.95,
         top_k=20,
@@ -137,7 +139,7 @@ def main():
                     "response": response,
                 })
 
-    print(f"Total completed: {start + len(batch)}")
+    print(f"Saved {len(batch)} more. Total completed: {len(done_ids) + start + len(batch)}")
     # time.sleep(300)  # 300 seconds = 5 minutes, to not overheat gpu during generation
 
 if __name__ == "__main__":

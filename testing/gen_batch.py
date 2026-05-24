@@ -20,37 +20,36 @@ client = OpenAI(
     base_url="https://api.deepseek.com",
 )
 
-OUTPUT_PATH = "./results/batch_dinoskip.jsonl"
+OUTPUT_PATH = "./results/batch_private.jsonl"
 
 # Load dataset
-public_data = [json.loads(line) for line in open("./data/public.jsonl")]
-print(f"Loaded {len(public_data)} questions from {"./data/public.jsonl"}")
+public_data = [json.loads(line) for line in open("./data/private.jsonl")]
+print(f"Loaded {len(public_data)} questions from {"./data/private.jsonl"}")
 id_to_public = {item["id"]: item for item in public_data}
 
-test_data = []
-with open("./results/dinoskip_results.jsonl", "r", encoding="utf-8") as f:
-    for line in f:
-        row = json.loads(line)
-        eval_id = row["id"]
+# test_data = []
+# with open("./results/batch_private.jsonl", "r", encoding="utf-8") as f:
+#     for line in f:
+#         row = json.loads(line)
+#         eval_id = row["id"]
 
-        test_data.append(id_to_public[eval_id])
+#         test_data.append(id_to_public[eval_id])
 
-public_data = test_data
-print(f"Loaded {len(public_data)} dinoskip and matched to public.")
+# public_data = test_data
+# print(f"Loaded {len(public_data)} and matched to public.")
 w = datetime.now()
 
 # Prompts
 SYSTEM_PROMPT_FRQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Put your final answer inside \\boxed{}. "
-    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
-    # "If a part has multiple values, group those values in parentheses. "
+    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}"
 )
 
 SYSTEM_PROMPT_MCQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
     "Use the answer choices to determine the correct option. "
-    "Put your final answer inside \\boxed{<letter>}. "
+    "Put your final answer inside \\boxed{<letter>}"
 )
 
 FRQ_TEMPLATE = """Problem: {question}"""
