@@ -1,7 +1,15 @@
 import json
 import random
 
-correct_results_path = "./results/evaluation_results_.jsonl"
+correct_results_path = "./results/evaluation_results.jsonl"
+eval_ids_path = "./results/id.jsonl"
+
+# Load eval IDs
+eval_ids = set()
+with open(eval_ids_path, "r", encoding="utf-8") as f:
+    for line in f:
+        row = json.loads(line)
+        eval_ids.add(str(row["id"]))  # str handles int/string ID mismatch
 
 SYSTEM_PROMPT_FRQ = (
     "You are an expert mathematician. Solve the problem step-by-step. "
@@ -26,7 +34,6 @@ def build_prompt(question, options):
 
     return SYSTEM_PROMPT_FRQ, question
 
-
 all_data = []
 
 with open(correct_results_path, "r", encoding="utf-8") as f:
@@ -45,18 +52,18 @@ with open(correct_results_path, "r", encoding="utf-8") as f:
         ]
 
         all_data.append({
-            "id": data["id"],
+            "id": str(data["id"]),
             "messages": messages,
         })
 
+eval_data = [row for row in all_data if row["id"] in eval_ids]
+train_data = [row for row in all_data if row["id"] not in eval_ids]
+
 random.seed(42)
-random.shuffle(all_data)
+random.shuffle(train_data)
 
-train_data = all_data[:1000]
-eval_data = all_data[1000:]
-
-print(len(train_data))
-print(len(eval_data))
+print("train:", len(train_data))
+print("eval:", len(eval_data))
 
 with open("./results/sft_train.jsonl", "w", encoding="utf-8") as f:
     for row in train_data:
