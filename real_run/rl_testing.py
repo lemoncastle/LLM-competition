@@ -4,14 +4,14 @@ import json
 import torch
 import sympy as sp
 import re
-from datasets import Dataset
+from datasets import load_dataset, Dataset
 import os
 import re
 import sys
 
 DATA_PATH = "./data/public.jsonl"  # your training data
 OUTPUT_DIR = "./qwen_math_grpo"  # where to save your GRPO checkpoint
-MODEL_NAME = "./qwen_math_sft/test"  # your SFT checkpoint
+MODEL_NAME = "./qwen_math_sft/test(5)"  # your SFT checkpoint
 MAX_SEQ_LENGTH = 16384
 
 # -------------------------
@@ -203,16 +203,34 @@ def reward_func(completions, answer, options=None, **kwargs):
     return rewards
 
 def main():
-    public_data = [json.loads(line) for line in open(DATA_PATH)]
-
-    train_dataset = Dataset.from_list([
-    {
-        "question": [{"role": "user", "content": str(item["question"])}],
-        "answer": str(item["answer"]),
-        "options": item.get("options") or [],
+    eval_ids = load_dataset("json",data_files="./results/sft_eval_id.jsonl",split="train",)
+    public_data = [json.loads(line)for line in open("./data/public.jsonl")]
+    id_to_public = {
+        item["id"]: item
+        for item in public_data
     }
-    for item in public_data
-    ])
+
+    filtered_eval = []
+    for row in eval_ids:
+        row_id = row["id"]
+
+        if row_id not in id_to_public:
+            continue
+
+        source = id_to_public[row_id]
+
+        filtered_eval.append({
+            "prompt": [
+                {
+                    "role": "user",
+                    "content": source["question"],
+                    "options": source.get("options") or [],
+                }
+            ],
+            "answer": source["answer"],
+            "id": row_id,
+        })
+    eval_dataset = filtered_eval
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=MODEL_NAME,
@@ -236,20 +254,20 @@ def main():
     )
 
     training_args = GRPOConfig(
-    output_dir=OUTPUT_DIR,
+        output_dir=OUTPUT_DIR,
 
-    learning_rate=5e-6,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=8,
+        learning_rate=5e-6,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=8,
 
-    num_generations=2,
-    max_prompt_length=2048
-    max_completion_length=12288,
+        num_generations=2,
+        max_prompt_length=4096,
+        max_completion_length=16384,
 
-    bf16=True,
-    logging_steps=2,
-    save_steps=5,
-    report_to="none",
+        bf16=True,
+        logging_steps=2,
+        save_steps=5,
+        report_to="none",
     )
 
     trainer = GRPOTrainer(
@@ -257,7 +275,7 @@ def main():
         processing_class=tokenizer,
         reward_funcs=reward_func,
         args=training_args,
-        train_dataset=train_dataset,
+        train_dataset=eval_dataset,
     )
 
     trainer.train()

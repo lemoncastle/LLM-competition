@@ -8,7 +8,7 @@ from tqdm import tqdm
 from pathlib import Path
 
 public_data = [json.loads(line) for line in open("./data/public.jsonl")]
-output_data = [json.loads(line) for line in open("./results/batch_output_roll.jsonl")]
+output_data = [json.loads(line) for line in open("./results/sft_train_distilled.jsonl")]
 
 # Create lookup dictionary for outputs by index
 output_by_id = {}
@@ -116,11 +116,11 @@ print(f"  Overall    : {sum(r['correct'] for r in results):4d} / {len(results):4
 print("=" * 50)
 
 # Save all results as JSONL
-# output_path = "./results/evaluation_results.jsonl"
-# with open(output_path, "w", encoding="utf-8") as f:
-#     for result in results:
-#         f.write(json.dumps(result, ensure_ascii=False) + "\n")
-# print(f"All results saved to {output_path}")
+output_path = "./results/evaluation_results.jsonl"
+with open(output_path, "w", encoding="utf-8") as f:
+    for result in results:
+        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+print(f"All results saved to {output_path}")
 
 # Save only incorrect results as JSONL
 # skip responses with 'dinoskip' as they are not really incorrect but intentionally skipped
@@ -136,21 +136,21 @@ print("=" * 50)
 # print(f"Incorrect results saved to {incorrect_path} ({incorrect_count} items)")
 
 # Save only 'dinoskip' responses as JSONL
-dinoskip_path = "./results/dinoskip_results.jsonl"
-dinoskip_count = 0
+# dinoskip_path = "./results/dinoskip_results.jsonl"
+# dinoskip_count = 0
 
-with open(dinoskip_path, "w", encoding="utf-8") as f:
-    for result in results:
-        if result.get("response") == "dinoskip":  # Only save those with 'dinoskip' response
-            f.write(json.dumps(result, ensure_ascii=False) + "\n")
-            dinoskip_count += 1
+# with open(dinoskip_path, "w", encoding="utf-8") as f:
+#     for result in results:
+#         if result.get("response") == "dinoskip":  # Only save those with 'dinoskip' response
+#             f.write(json.dumps(result, ensure_ascii=False) + "\n")
+#             dinoskip_count += 1
 
-print(f"dinoskip saved to {dinoskip_path} ({dinoskip_count} items)")
+# print(f"dinoskip saved to {dinoskip_path} ({dinoskip_count} items)")
 
-# save correct and incorrect results as jsonl
-output_path2 = "./results/evaluation_results_.jsonl"
-with open(output_path2, "w", encoding="utf-8") as f:
-    for result in results:
-        if result.get("response") != "dinoskip":
-            f.write(json.dumps(result, ensure_ascii=False) + "\n")
-print(f"All non-dinoskip results saved to {output_path2} ({len(results) - dinoskip_count} items)")
+# # save correct and incorrect results as jsonl
+# output_path2 = "./results/evaluation_results_.jsonl"
+# with open(output_path2, "w", encoding="utf-8") as f:
+#     for result in results:
+#         if result.get("response") != "dinoskip":
+#             f.write(json.dumps(result, ensure_ascii=False) + "\n")
+# print(f"All non-dinoskip results saved to {output_path2} ({len(results) - dinoskip_count} items)")

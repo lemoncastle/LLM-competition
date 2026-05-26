@@ -19,8 +19,8 @@ client = OpenAI(
 
 MODEL = "deepseek-v4-pro"
 
-INPUT_PATH = "./results/batch_output_roll.jsonl"
-OUTPUT_PATH = "./results/sft_train_distilled.jsonl"
+INPUT_PATH = "./results/a.jsonl"
+OUTPUT_PATH = "./results/b.jsonl"
 
 SYSTEM_PROMPT_DISTILL = """
 You are rewriting a math solution into a concise high-quality thinking trace.
