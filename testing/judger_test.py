@@ -42,10 +42,10 @@ from judger import Judger
 
 judger = Judger(strict_extract=False)
 
-expected = ["sqrt(30)/(3+x)"]
+expected = ["infinity"]
 
 tests = [
-    r"\boxed{\frac{\sqrt{30}}{(3+x)}}",
+    r"\boxed{\infty}",
     
 ]
 
@@ -72,36 +72,3 @@ for t in tests:
 
     for p, g in zip(norm_pred, norm_gold):
         print("PAIR:", repr(p), "vs", repr(g), "=>", judger.is_equal(p, g))
-
-import re
-
-def normalize_for_frozen_judger(ans: str) -> str:
-    s = ans.strip()
-
-    # sqrt(30) -> \sqrt{30}
-    s = re.sub(r"sqrt\(([^()]*)\)", r"\\sqrt{\1}", s)
-    s = re.sub(r"(?<!\\)sqrt\{([^{}]+)\}", r"\\sqrt{\1}", s)
-
-    # \frac{\sqrt{30}}{3+x} -> \sqrt{30}/(3+x)
-    s = re.sub(
-        r"\\frac\{(\\sqrt\{[^{}]+\})\}\{([^{}]+)\}",
-        r"\1/(\2)",
-        s,
-    )
-
-    # \frac{a}{b} -> a/(b), for simple non-nested numerator
-    s = re.sub(
-        r"\\frac\{([^{}]+)\}\{([^{}]+)\}",
-        r"\1/(\2)",
-        s,
-    )
-
-    # Remove redundant denominator parentheses: /((3+x)) -> /(3+x)
-    s = re.sub(r"/\(\(([^()]*)\)\)", r"/(\1)", s)
-
-    return s
-
-def boxed_for_judger(ans: str) -> str:
-    return r"\boxed{" + normalize_for_frozen_judger(ans) + "}"
-
-print(boxed_for_judger(r"\frac{\sqrt{30}}{(3+x)}"))
