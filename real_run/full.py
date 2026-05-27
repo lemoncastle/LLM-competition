@@ -22,7 +22,7 @@ os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
 OUTPUT_PATH = "./results/submission.csv"
 DATA_PATH = "./data/private.jsonl"
-LORA_PATH = "./qwen_math_sft/test(5)"
+LORA_PATH = "./qwen_math_sft/test"
 
 # prompts for free response and MCQ problems
 SYSTEM_PROMPT_FRQ = (
@@ -62,6 +62,7 @@ def main():
         load_format="bitsandbytes",
         enable_prefix_caching=False,
         enable_lora=True,
+        max_lora_rank=32,
         gpu_memory_utilization=0.95,
         max_model_len=36767, # could increase a little, but watch out for OOM
         trust_remote_code=True,

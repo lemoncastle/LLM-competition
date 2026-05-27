@@ -13,22 +13,26 @@ from tqdm import tqdm
 os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 
 MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
-OUTPUT_PATH = "./results/basesft_real.jsonl"
+OUTPUT_PATH = "./results/basesft_7.jsonl"
 DATA_PATH = "./data/public.jsonl"
-LORA_PATH = "./qwen_math_sft/test(5)"
+LORA_PATH = "./qwen_math_sft/test"
 
 # prompts for free response and MCQ problems
 SYSTEM_PROMPT_FRQ = (
-    "You are an expert mathematician. Solve the problem step-by-step. "
-    "Put your final answer inside \\boxed{}. "
-    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}, "
-    "If a part has multiple values, group those values in parentheses. "
+    "You are an expert mathematician. "
+    "Solve the problem using concise necessary reasoning. "
+    "Do not repeat calculations or include unnecessary verification. "
+    "Put the final answer inside \\boxed{}. "
+    "If the problem has multiple sub-answers, separate them by commas inside a single \\boxed{}. "
+    "If a part has multiple values, group those values in parentheses."
 )
 
 SYSTEM_PROMPT_MCQ = (
-    "You are an expert mathematician. Solve the problem step-by-step. "
-    "Use the answer choices to determine the correct option. "
-    "Put your final answer inside \\boxed{<letter>}. "
+    "You are an expert mathematician. "
+    "Solve the multiple-choice problem using concise necessary reasoning. "
+    "Use the answer choices when helpful. "
+    "Do not repeat calculations or include unnecessary verification. "
+    "Put the final answer inside \\boxed{<letter>}."
 )
 
 # I didn't define these
@@ -62,8 +66,7 @@ def main():
     with open("./results/sft_eval_id.jsonl", "r", encoding="utf-8") as f:
         for line in f:
             row = json.loads(line)
-            eval_id = row["id"]
-
+            eval_id = int(row["id"])
             test_data.append(id_to_public[eval_id])
 
     print(f"Loaded {len(test_data)} held-out eval examples")
@@ -79,11 +82,11 @@ def main():
         load_format="bitsandbytes",
         enable_prefix_caching=True,
         enable_lora=True,
-        # max_lora_rank=32,
-        gpu_memory_utilization=0.88,
+        max_lora_rank=32,
+        gpu_memory_utilization=0.95,
         max_model_len=16384, # could increase a little, but watch out for OOM
         trust_remote_code=True,
-        max_num_seqs=4, # could increase a little, but watch out for OOM
+        max_num_seqs=8, # could increase a little, but watch out for OOM
         max_num_batched_tokens=16384, # was 32768
     )
 
