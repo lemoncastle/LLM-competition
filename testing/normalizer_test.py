@@ -28,10 +28,22 @@ def extract_last_boxed(text: str) -> tuple[str, int, int] | None:
 
     return text[start + len(BOX): i - 1], start, i
 
+def normalize_function_args_for_judger(s: str) -> str:
+    # \ln 10 -> \ln(10)
+    # \log 10 -> \log(10)
+    # \sin x -> \sin(x), etc.
+    funcs = r"ln|log|sin|cos|tan|sec|csc|cot|exp"
+    s = re.sub(
+        rf"\\({funcs})\s+([A-Za-z0-9.]+)",
+        r"\\\1(\2)",
+        s,
+    )
+    return s
 
 def normalize_for_judger(s: str) -> str:
     s = s.strip()
-
+    s = normalize_function_args_for_judger(s)
+    
     # infinity
     s = s.replace(r"-\infty", "-infinity").replace("-∞", "-infinity")
     s = re.sub(r"(?<![A-Za-z])-inf(?![A-Za-z])", "-infinity", s)
@@ -53,6 +65,12 @@ def normalize_for_judger(s: str) -> str:
     s = re.sub(
         r"(-?)\\frac\{([^{}]*\\sqrt\{[^{}]+\}[^{}]*)\}\{([^{}]+)\}",
         r"\1(\2)/(\3)",
+        s,
+    )
+    # complex frac -> slash form
+    s = re.sub(
+        r"\\frac\{((?:[^{}]|\{[^{}]*\})+)\}\{((?:[^{}]|\{[^{}]*\})+)\}",
+        r"(\1)/(\2)",
         s,
     )
 
@@ -85,13 +103,13 @@ content = r"""<think>
 Some thinking response.
 </think>
 
-\boxed{-\frac{3\sqrt{10}}{10}}"""
+\boxed{\sin(\alpha)=\frac{5}{\sqrt{29}},\ \cos(\alpha)=-\frac{2}{\sqrt{29}},\ \cot(\alpha)=-2/(5),\ \sec(\alpha)=-(\sqrt{29})/(2),\ \csc(\alpha)=(\sqrt{29})/(5)}"""
 
 print("ORIGINAL:", content)
 norm = normalize_assistant_output(content)
 print("NORMALIZED:", norm)
 
-expected = ["-0.948683298050514"]
+expected = ["-sqrt(13)/4","0", "sqrt(13)/4", "0", "0", "-13", "-13", "+INF"]
 
 t = norm
 
