@@ -1,6 +1,5 @@
-# pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0
-# 2.11 wasn't working idk
-# vllm 19.0
+# base model test converted to python script.
+
 def main():
     import json
     import re

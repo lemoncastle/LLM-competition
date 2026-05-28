@@ -1,3 +1,5 @@
+# given a set of results from evaluation, combine them and split into train/eval set for SFT comparing to an id set (that I made before)
+
 import json
 import random
 

@@ -1,3 +1,5 @@
+# tests the trained SFT model on small eval set with lora adapter.
+
 import os
 import json
 import re

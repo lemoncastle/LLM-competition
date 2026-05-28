@@ -1,3 +1,5 @@
+# I can't remember what this is for, think it was another set I made  to train on but never used.
+
 import json
 import re
 

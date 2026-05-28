@@ -1,3 +1,6 @@
+# A script to test normalization of assistant outputs because judger.py sucks
+# judger.py has been udpated to fix most of these issues but still useful to do some normalization before it gets passed to judger to reduce the number of edge cases it has to handle.
+
 import re
 import sys
 sys.path.insert(0, ".")

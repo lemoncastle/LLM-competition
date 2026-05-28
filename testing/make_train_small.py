@@ -1,3 +1,5 @@
+# generates a dataset using https://huggingface.co/datasets/open-r1/OpenR1-Math-220k
+# the dataset is quite good but very verbose, I didn't have enough time to play around with this dataset unfortunately.
 def main():
     from datasets import load_dataset
     import json

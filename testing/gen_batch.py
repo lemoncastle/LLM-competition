@@ -1,6 +1,9 @@
 # Batch generation script for public dataset using DeepSeek API
 # runs at 50 questions per hour can take 30+ hours for full set.
 # designed to be resumable by comparing ID's if output already exists
+# the current iteration was used to generate batch responses for private questions to compare to.
+# this exact pipeline and prompts were used to generate responses from public to train SFT model.
+
 import os
 import json
 import time
