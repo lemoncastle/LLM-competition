@@ -115,8 +115,8 @@ def normalize_assistant_output(content: str) -> str:
 # I'm kinda stupid and saved inference data in full.py as csv instead of jsonl.
 import pandas as pd
 
-INPUT_CSV = "input.csv"
-OUTPUT_CSV = "normalized.csv"
+INPUT_CSV = "submission7.csv"
+OUTPUT_CSV = "submission.csv"
 
 df = pd.read_csv(INPUT_CSV)
 
