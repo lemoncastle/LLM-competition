@@ -85,6 +85,21 @@ def normalize_assistant_output(content: str) -> str:
     boxed, start, end = found
     return content[:start] + BOX + normalize_for_judger(boxed) + "}" + content[end:]
 
+# I'm kinda stupid and saved inference data in full.py as csv instead of jsonl.
+import pandas as pd
+
+INPUT_CSV = "./results/submission.csv"
+OUTPUT_CSV = "submission.csv"
+
+df = pd.read_csv(INPUT_CSV)
+
+# normalize assistant responses
+df["response"] = df["response"].apply(normalize_assistant_output)
+
+df.to_csv(OUTPUT_CSV, index=False)
+
+print("done")
+
 # import json
 
 # INPUT_JSONL = "./results/sft_train_distilled.jsonl"
@@ -111,18 +126,3 @@ def normalize_assistant_output(content: str) -> str:
 #         fout.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
 # print("done")
-
-# I'm kinda stupid and saved inference data in full.py as csv instead of jsonl.
-import pandas as pd
-
-INPUT_CSV = "submission7.csv"
-OUTPUT_CSV = "submission.csv"
-
-df = pd.read_csv(INPUT_CSV)
-
-# normalize assistant responses
-df["response"] = df["response"].apply(normalize_assistant_output)
-
-df.to_csv(OUTPUT_CSV, index=False)
-
-print("done")

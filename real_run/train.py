@@ -31,7 +31,7 @@ def main():
 
     model = FastLanguageModel.get_peft_model(
         model,
-        r=32, # try 32 (more training parameters, more VRAM)
+        r=16, # try 32 (more training parameters, more VRAM)
         target_modules=[
             "q_proj", "k_proj", "v_proj", "o_proj",
             "gate_proj", "up_proj", "down_proj",
@@ -51,7 +51,7 @@ def main():
         # order matters here so large batch size better but can OOM 
         per_device_train_batch_size=2,
         gradient_accumulation_steps=8,
-        num_train_epochs=3,
+        num_train_epochs=2.5,
 
         learning_rate=5e-6, # or 5e-6 
         warmup_ratio=0.03,
