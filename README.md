@@ -5,6 +5,7 @@ This repository covers code to build a small llm (Qwen3-4B-Thinking-2507) to do 
 
 | File | Description |
 |---|---|
+| `data/` | Public and Private datasets for testing and inference |
 | `results/` | Output JSONL files written at runtime |
 | `testing/` | Various scripts used for testing |
 | `real_run/` | training and inference scripts used for final submission |
@@ -32,6 +33,7 @@ This runs a single function ```run_inference()``` that loads the model, runs inf
 Which gets saved in ```./results/``` Make sure your ```private.jsonl``` is in ```./data/```
 
 ### Inference
+---
 Final submission inference was done on DSMLP using RTX pro 6000 MIG to 24gb with 8 cpu and 32gb ram
 - ```K8S_TIMEOUT_SECONDS=43200 launch-sp26-cuda128.sh -b -l gpu-class=medium -W CSE151B_SP26_A00 -g 1 -c 8 -m 32```
 
@@ -42,13 +44,16 @@ Inference time took 4 days restarting every 12 hours.
 Training time was done on runpod using A6000 GPU using template ```meloncastle/runpod-template-151:v2``` Taking 2 hours.
 
 ### Costs
+---
 - OpenAI - $5 (developing training set)
 - Runpod - $30 (training and inference)
 - Deepseek - $15 (developing training set)
 - Electricity - $5.15 (local AI inference)
-Total $52 (went over budget :( )
+
+Total $52 (went over budget self imposed budget rip)
 
 ### Scores
+---
 1. 0.558 (local inference)
 2. 0.558 (dsmlp)
 3. 0.607 (dsmlp)
@@ -56,9 +61,10 @@ Total $52 (went over budget :( )
 5. 0.646 (resubmit with normalization and updated judger)
 6. 0.636 (heavy distilled training set on runpod)
 
-Current leaderboard rank 40/70 :(
+Current leaderboard rank 40/78 :(
 
 ### Notes
+---
 All I could figure out was doing supervised fine tuning.
 - I was having a lot of trouble getting good outputs so I spent lots of time looking at outputs and cleaning dataset, and generated response which was honestly a waste of time as a 'team' of 1 as I quickly ran out of time once I understood what was going on. I also went over my self imposed $50 budget quickly as compute is quite expensive unfort :(
 
