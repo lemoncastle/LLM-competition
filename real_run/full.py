@@ -1,9 +1,7 @@
-# the full real run on the private test set using trained adaptor. Generates responses in batches and saves to CSV, keeping track of completed IDs to allow for resuming if interrupted.
-# 
-# change temperature, tokens and prompts if needed
-# sleeps 5 minutes at end of each batch of 50 to avoid gpu overheating (since running locally)
+# the full real run on the private test set using trained adaptor.
+# Generates responses in batches and saves to CSV, keeping track of completed IDs to allow for resuming if interrupted.
 
-def main():
+def run_inference():
     import os
     import json
     import re
@@ -23,7 +21,8 @@ def main():
     MODEL_ID = "Qwen/Qwen3-4B-Thinking-2507"
     OUTPUT_PATH = "./results/submission.csv"
     DATA_PATH = "./data/private.jsonl"
-    LORA_PATH = "./qwen_math_sft/test(5)"
+    # LORA_PATH = "./qwen_math_sft/test(5)"
+    LORA_REPO = "meloncastle/qwen-cse151b"
 
     # prompts for free response and MCQ problems
     SYSTEM_PROMPT_FRQ = (
@@ -126,7 +125,7 @@ def main():
         outputs = llm.generate(
             prompts,
             sampling_params=sampling_params,
-            lora_request=LoRARequest("math_sft", 16, LORA_PATH),
+            lora_request=LoRARequest("math_sft", 16, LORA_REPO),
         )
 
         responses = [out.outputs[0].text.strip() for out in outputs]
@@ -246,4 +245,4 @@ def main():
     print("done")
 
 if __name__ == "__main__":
-    main()
+    run_inference()
