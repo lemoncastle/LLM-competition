@@ -29,11 +29,15 @@ Run ```full.py```
 
 This runs a single function ```run_inference()``` that loads the model, runs inference, applies post processing and outputs the final submission as ```submission.csv```
 
+Which gets saved in ```./results/``` Make sure your ```private.jsonl``` is in ```./data/```
+
 ### Inference
 Final submission inference was done on DSMLP using RTX pro 6000 MIG to 24gb with 8 cpu and 32gb ram
 - ```K8S_TIMEOUT_SECONDS=43200 launch-sp26-cuda128.sh -b -l gpu-class=medium -W CSE151B_SP26_A00 -g 1 -c 8 -m 32```
 
 Inference time took 4 days restarting every 12 hours.
+
+```full.py``` has a slightly modified version with batch_size of 8 (instead of 2) which requires a 48gb GPU (A6000 GPU or equivalent) lowering inference time to ~9 hours 
 
 Training time was done on runpod using A6000 GPU using template ```meloncastle/runpod-template-151:v2``` Taking 2 hours.
 
