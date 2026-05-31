@@ -51,6 +51,30 @@ def main() -> None:
         load_in_4bit=True,
     )
 
+    def resolve_valid_eos_token(tok) -> str:
+        candidates = [
+            tok.eos_token,
+            "<|im_end|>",
+            "<|endoftext|>",
+            "</s>",
+            "<|eot_id|>",
+        ]
+        unk_id = getattr(tok, "unk_token_id", None)
+        for t in candidates:
+            if not t:
+                continue
+            tid = tok.convert_tokens_to_ids(t)
+            if tid is None:
+                continue
+            if isinstance(tid, int) and tid >= 0 and (unk_id is None or tid != unk_id):
+                return t
+        raise ValueError("Could not resolve a valid EOS token present in tokenizer vocabulary.")
+
+    eos_token = resolve_valid_eos_token(tokenizer)
+    tokenizer.eos_token = eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = eos_token
+
     model = FastLanguageModel.get_peft_model(
         model,
         r=args.lora_r,
@@ -106,6 +130,7 @@ def main() -> None:
         max_length=args.max_seq_length,
         packing=False,
         assistant_only_loss=True,
+        eos_token=eos_token,
         eval_strategy="steps",
         eval_steps=args.eval_steps,
         logging_steps=10,
