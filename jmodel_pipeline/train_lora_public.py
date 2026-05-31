@@ -11,8 +11,8 @@ def parse_args() -> argparse.Namespace:
         description="Quick (<2h target) LoRA SFT training on public-derived chat dataset."
     )
     parser.add_argument("--model-name", default="unsloth/Qwen3-4B-Thinking-2507")
-    parser.add_argument("--data-path", default="./results/quick_public_sft.jsonl")
-    parser.add_argument("--output-dir", default="./qwen_math_sft/quick_public_lora")
+    parser.add_argument("--data-path", default="./results/public_sft.jsonl")
+    parser.add_argument("--output-dir", default="./qwen_math_sft/public_lora_v1")
     parser.add_argument("--max-seq-length", type=int, default=4096)
     parser.add_argument("--lora-r", type=int, default=8)
     parser.add_argument("--lora-alpha", type=int, default=16)

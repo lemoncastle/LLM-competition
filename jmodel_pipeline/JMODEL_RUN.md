@@ -1,6 +1,6 @@
 # JModel Run Guide
 
-This branch adds a separate script `jmodel_infer.py` so your partner's scripts stay untouched.
+This branch adds a separate script `jmodel_pipeline/jmodel_infer.py` so your partner's scripts stay untouched.
 
 ## 1) Start a GPU session (DSMLP)
 
@@ -27,7 +27,7 @@ If you already have a working env from your partner's setup, reuse it.
 Runs on `data/public.jsonl`, scores with `judger.py`, and writes JSONL results.
 
 ```bash
-python jmodel_infer.py \
+python jmodel_pipeline/jmodel_infer.py \
   --mode public_eval \
   --enable-prefix-caching \
   --finalize-missing-box \
@@ -38,7 +38,7 @@ python jmodel_infer.py \
 Optional quick smoke test:
 
 ```bash
-python jmodel_infer.py \
+python jmodel_pipeline/jmodel_infer.py \
   --mode public_eval \
   --limit 80 \
   --enable-prefix-caching \
@@ -51,7 +51,7 @@ python jmodel_infer.py \
 Writes Kaggle file `id,response` as CSV.
 
 ```bash
-python jmodel_infer.py \
+python jmodel_pipeline/jmodel_infer.py \
   --mode private_submit \
   --enable-prefix-caching \
   --finalize-missing-box \
@@ -62,7 +62,7 @@ python jmodel_infer.py \
 If interrupted, resume:
 
 ```bash
-python jmodel_infer.py \
+python jmodel_pipeline/jmodel_infer.py \
   --mode private_submit \
   --enable-prefix-caching \
   --finalize-missing-box \
@@ -76,7 +76,7 @@ python jmodel_infer.py \
 If you want inference with an adapter:
 
 ```bash
-python jmodel_infer.py \
+python jmodel_pipeline/jmodel_infer.py \
   --mode private_submit \
   --use-lora \
   --lora-path ./qwen_math_sft/test \

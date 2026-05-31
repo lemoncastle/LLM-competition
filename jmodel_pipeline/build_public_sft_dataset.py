@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
         description="Build quick SFT dataset from public.jsonl for LoRA fine-tuning."
     )
     parser.add_argument("--input", default="./data/public.jsonl")
-    parser.add_argument("--output", default="./results/quick_public_sft.jsonl")
+    parser.add_argument("--output", default="./results/public_sft.jsonl")
     parser.add_argument(
         "--include-system",
         action="store_true",

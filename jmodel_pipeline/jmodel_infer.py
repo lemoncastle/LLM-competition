@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
+from jmodel_normalizer import normalize_assistant_output
 
 os.environ.setdefault("VLLM_WORKER_MULTIPROC_METHOD", "spawn")
 
@@ -59,21 +60,21 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Output path. Defaults: ./results/jmodel_public_eval.jsonl or ./results/jmodel_submission.csv",
     )
-    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--batch-size", type=int, default=24)
     parser.add_argument("--limit", type=int, default=0, help="0 means all rows.")
     parser.add_argument(
         "--resume",
         action="store_true",
         help="Resume by skipping IDs already present in output file (private_submit only).",
     )
-    parser.add_argument("--max-tokens", type=int, default=4096)
-    parser.add_argument("--temperature", type=float, default=0.45)
+    parser.add_argument("--max-tokens", type=int, default=3072)
+    parser.add_argument("--temperature", type=float, default=0.4)
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--top-k", type=int, default=40)
     parser.add_argument(
         "--presence-penalty",
         type=float,
-        default=0.2,
+        default=0.15,
         help="Small positive value reduces repetitive loops.",
     )
     parser.add_argument(
@@ -92,7 +93,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--lora-path",
-        default="./qwen_math_sft/test",
+        default="./qwen_math_sft/public_lora_v1/final",
         help="Path to LoRA adapter directory (if --use-lora).",
     )
     parser.add_argument(
@@ -111,6 +112,16 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=192,
         help="Max tokens in finalization pass.",
+    )
+    parser.add_argument(
+        "--normalize-output",
+        action="store_true",
+        help="Normalize final response formatting (recommended for private submission).",
+    )
+    parser.add_argument(
+        "--no-normalize-output",
+        action="store_true",
+        help="Disable output normalization.",
     )
     return parser.parse_args()
 
@@ -220,6 +231,10 @@ def write_public_eval(path: Path, rows: Sequence[Dict]) -> None:
 
 def main() -> None:
     args = parse_args()
+    if args.mode == "private_submit":
+        args.normalize_output = True
+    if args.no_normalize_output:
+        args.normalize_output = False
 
     if args.data_path is None:
         args.data_path = (
@@ -334,6 +349,8 @@ def main() -> None:
                 responses[idx] = f"{responses[idx]}\n\n{final_text}"
 
         if args.mode == "private_submit":
+            if args.normalize_output:
+                responses = [normalize_assistant_output(r) for r in responses]
             private_rows.extend(
                 [{"id": item["id"], "response": resp} for item, resp in zip(batch, responses)]
             )
