@@ -26,12 +26,18 @@ def parse_args() -> argparse.Namespace:
         help="Hard cap for run-time control; lower this if training exceeds your time budget.",
     )
     parser.add_argument("--learning-rate", type=float, default=8e-5)
+    parser.add_argument("--eval-steps", type=int, default=40)
+    parser.add_argument("--save-steps", type=int, default=80)
     parser.add_argument("--seed", type=int, default=42)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.save_steps % args.eval_steps != 0:
+        raise ValueError(
+            f"Invalid config: save_steps ({args.save_steps}) must be a multiple of eval_steps ({args.eval_steps})."
+        )
 
     dataset = load_dataset("json", data_files=args.data_path, split="train")
     splits = dataset.train_test_split(test_size=0.05, seed=args.seed, shuffle=True)
@@ -101,9 +107,9 @@ def main() -> None:
         packing=False,
         assistant_only_loss=True,
         eval_strategy="steps",
-        eval_steps=50,
+        eval_steps=args.eval_steps,
         logging_steps=10,
-        save_steps=80,
+        save_steps=args.save_steps,
         save_total_limit=2,
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
