@@ -2,8 +2,9 @@ import argparse
 
 import torch
 from datasets import load_dataset
-from transformers import DataCollatorForLanguageModeling, Trainer, TrainingArguments
+import unsloth  # noqa: F401  # must be imported before transformers/peft patching
 from unsloth import FastLanguageModel
+from transformers import DataCollatorForLanguageModeling, Trainer, TrainingArguments
 
 
 def parse_args() -> argparse.Namespace:
@@ -128,7 +129,7 @@ def main() -> None:
         args=train_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         data_collator=collator,
     )
 
