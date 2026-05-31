@@ -1,80 +1,110 @@
-## Pushing the Boundary of LLM Mathematical Reasoning
-CSE 151B Spring 2026 Competition
+# CSE151B Kaggle Math Competition (JModel Pipeline)
 
-This repository covers code to build a small llm (Qwen3-4B-Thinking-2507) to do good on a math set.
+This repository contains our competition workflow for improving mathematical reasoning with:
 
-| File | Description |
+- Base model: `Qwen/Qwen3-4B-Thinking-2507`
+- Training method: LoRA supervised fine-tuning on public-set formatted data
+- Inference method: strict boxed-answer prompting + fallback finalization + output normalization
+
+## Repository Layout
+
+| Path | Purpose |
 |---|---|
-| `data/` | Public and Private datasets for testing and inference |
-| `results/` | Output JSONL files written at runtime |
-| `testing/` | Various scripts used for testing |
-| `real_run/` | training and inference scripts used for final submission |
-| `starter_code.ipynb` | Walks through environment setup and first generation |
-| `judger.py` | Response scoring logic on public set |
-| `utils.py` | Utilities used by `judger.py` |
+| `data/` | Competition files (`public.jsonl`, `private.jsonl`) |
+| `jmodel_pipeline/` | Main training/inference pipeline used for our method |
+| `judger.py`, `utils.py` | Public-set local evaluation utilities |
+| `real_run/`, `testing/` | Earlier/alternate scripts and experiments |
 
-### Replication
----
-Clone the repository ```git clone https://github.com/lemoncastle/cse151b.git```
+## JModel Method
 
-Set up a virtual environment (can take 40+ minutes)
-```rm -rf .venv
-python -m venv .venv
-source ./.venv/bin/activate
-python -m pip install -U pip wheel setuptools
-python -m pip install --no-cache-dir -r requirements.txt
-python -m ipykernel install --user --name cse151b --display-name "Python (151B)"
+The method is implemented in `jmodel_pipeline/`:
+
+- `build_public_sft_dataset.py`
+  - Builds chat-format SFT data from `data/public.jsonl`
+  - Produces `./results/public_sft.jsonl`
+
+- `train_lora_public.py`
+  - Trains a LoRA adapter on public-derived SFT data
+  - Saves adapter to `./qwen_math_sft/public_lora_v1/final`
+
+- `jmodel_infer.py`
+  - Runs inference for either:
+    - `public_eval` (local scoring)
+    - `private_submit` (Kaggle CSV generation)
+  - Includes:
+    - strict final answer formatting (`Final: \boxed{...}`)
+    - optional fallback finalization when boxed answer is missing
+    - resume support for interrupted private runs
+
+- `jmodel_normalizer.py`
+  - Normalizes final answers for robust extraction and submission formatting.
+
+## End-to-End Commands
+
+Run from repository root.
+
+### 1) Build SFT dataset
+
+```bash
+python jmodel_pipeline/build_public_sft_dataset.py --include-system
 ```
 
-Run ```full.py```
+### 2) Train LoRA adapter
 
-This runs a single function ```run_inference()``` that loads the model, runs inference, applies post processing and outputs the final submission as ```submission.csv```
+```bash
+python jmodel_pipeline/train_lora_public.py \
+  --data-path ./results/public_sft.jsonl \
+  --output-dir ./qwen_math_sft/public_lora_v1 \
+  --max-seq-length 4096 \
+  --lora-r 8 \
+  --lora-alpha 16 \
+  --epochs 2 \
+  --max-steps 320 \
+  --batch-size 1 \
+  --grad-accum 16 \
+  --learning-rate 8e-5 \
+  --eval-steps 40 \
+  --save-steps 80
+```
 
-Which gets saved in ```./results/``` Make sure your ```private.jsonl``` is in ```./data/```
+### 3) Generate final Kaggle file (`submission.csv`)
 
-### Inference
----
-Final submission inference was done on DSMLP using RTX pro 6000 MIG to 24gb with 8 cpu and 32gb ram
-- ```K8S_TIMEOUT_SECONDS=43200 launch-sp26-cuda128.sh -b -l gpu-class=medium -W CSE151B_SP26_A00 -g 1 -c 8 -m 32```
+```bash
+python jmodel_pipeline/jmodel_infer.py \
+  --mode private_submit \
+  --batch-size 24 \
+  --enable-prefix-caching \
+  --finalize-missing-box \
+  --use-lora \
+  --lora-path ./qwen_math_sft/public_lora_v1/final \
+  --output-path ./results/submission.csv
+```
 
-Inference time took 4 days restarting every 12 hours.
+If interrupted, resume:
 
-```full.py``` has a slightly modified version with batch_size of 8 (instead of 2) which requires a 48gb GPU (A6000 GPU or equivalent) lowering inference time to ~9 hours 
+```bash
+python jmodel_pipeline/jmodel_infer.py \
+  --mode private_submit \
+  --batch-size 24 \
+  --enable-prefix-caching \
+  --finalize-missing-box \
+  --use-lora \
+  --lora-path ./qwen_math_sft/public_lora_v1/final \
+  --resume \
+  --output-path ./results/submission.csv
+```
 
-Training time was done on runpod using A6000 GPU using template ```meloncastle/runpod-template-151:v2``` Taking 2 hours.
+## Public Evaluation (Optional)
 
-### Costs
----
-- OpenAI - $5 (developing training set)
-- Runpod - $30 (training and inference)
-- Deepseek - $15 (developing training set)
-- Electricity - $5.15 (local AI inference)
+```bash
+python jmodel_pipeline/jmodel_infer.py \
+  --mode public_eval \
+  --limit 150 \
+  --batch-size 16 \
+  --enable-prefix-caching \
+  --finalize-missing-box \
+  --use-lora \
+  --lora-path ./qwen_math_sft/public_lora_v1/final \
+  --output-path ./results/jmodel_lora_eval.jsonl
+```
 
-Total $52 (went over budget self imposed budget rip)
-
-### Scores
----
-1. 0.558 (local inference)
-2. 0.558 (dsmlp)
-3. 0.607 (dsmlp)
-4. 0.628 (resubmit with normalization)
-5. 0.646 (resubmit with normalization and updated judger)
-6. 0.636 (heavy distilled training set on runpod)
-
-Current leaderboard rank 40/78 :(
-
-### Notes
----
-All I could figure out was doing supervised fine tuning.
-- I was having a lot of trouble getting good outputs so I spent lots of time looking at outputs and cleaning dataset, and generated response which was honestly a waste of time as a 'team' of 1 as I quickly ran out of time once I understood what was going on. I also went over my self imposed $50 budget quickly as compute is quite expensive unfort :(
-
-Best ways to improve the model and what I ***should*** have done
-- Work strictly using the base model **FIRST**. The base model is already quite strong and do something like self consistency where you have multiple prompts and you generate a question with each prompt and compare. The current pipeline I have is splitting by MCQ and FRQ but we could've split even more like statistics, arithmetic, or even math level like hard, easy or whatever.
-    - I noticed statistics questions like ones that ask about statistical significance answers are all high precision 1e-10+ and our judger scores on precision 1e-8 so you need a lot of precision but generally asking the model to output 1e-8 precision wastes a lot of tokens so having seperate prompts would have been really smart. 
-- I needed a lot more time doing fine tuning, I was only able to run training 5 times.
-- I was never able to get reinforcement learning to work. I don't really know how to code.
-- Something that hurt was the reliance on AI to help me do research. alot of these concepts aren't terribly hard but there's lots of research papers that go into these and having to sift through them actually hurt my brain because I never understood them. 
-
-I have a teammate jgu0453 but they didn't help unfortunately.
-
-Nice try though lots to learn we'll get them next time. 
