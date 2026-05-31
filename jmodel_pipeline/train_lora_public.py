@@ -50,30 +50,14 @@ def main() -> None:
         dtype=torch.bfloat16,
         load_in_4bit=True,
     )
+    # Force concrete Qwen special tokens so TRL does not resolve "<EOS_TOKEN>".
+    tokenizer.eos_token = "<|im_end|>"
+    tokenizer.pad_token = "<|im_end|>"
 
-    def resolve_valid_eos_token(tok) -> str:
-        candidates = [
-            tok.eos_token,
-            "<|im_end|>",
-            "<|endoftext|>",
-            "</s>",
-            "<|eot_id|>",
-        ]
-        unk_id = getattr(tok, "unk_token_id", None)
-        for t in candidates:
-            if not t:
-                continue
-            tid = tok.convert_tokens_to_ids(t)
-            if tid is None:
-                continue
-            if isinstance(tid, int) and tid >= 0 and (unk_id is None or tid != unk_id):
-                return t
-        raise ValueError("Could not resolve a valid EOS token present in tokenizer vocabulary.")
-
-    eos_token = resolve_valid_eos_token(tokenizer)
-    tokenizer.eos_token = eos_token
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = eos_token
+    # Safety fallback: ensure token IDs are valid.
+    if tokenizer.eos_token_id is None or tokenizer.pad_token_id is None:
+        tokenizer.add_special_tokens({"eos_token": "<|im_end|>", "pad_token": "<|im_end|>"})
+        model.resize_token_embeddings(len(tokenizer))
 
     model = FastLanguageModel.get_peft_model(
         model,
@@ -130,7 +114,9 @@ def main() -> None:
         max_length=args.max_seq_length,
         packing=False,
         assistant_only_loss=True,
-        eos_token=eos_token,
+        eos_token=tokenizer.eos_token,
+        pad_token=tokenizer.pad_token,
+        dataset_kwargs={"add_special_tokens": False},
         eval_strategy="steps",
         eval_steps=args.eval_steps,
         logging_steps=10,
