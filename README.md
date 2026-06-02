@@ -39,7 +39,7 @@ Final submission inference was done on DSMLP using RTX pro 6000 MIG to 24gb with
 
 Inference time took 4 days restarting every 12 hours.
 
-```full.py``` has a slightly modified version with batch_size of 8 (instead of 2) which requires a 48gb GPU (A6000 GPU or equivalent) lowering inference time to ~9 hours 
+```full.py``` has a slightly modified version with max_num_seqs of 8 (instead of 2) which requires a 48gb GPU (A6000 GPU or equivalent) lowering inference time to ~9 hours 
 
 Training time was done on runpod using A6000 GPU using template ```meloncastle/runpod-template-151:v2``` Taking 2 hours.
 
@@ -50,18 +50,22 @@ Training time was done on runpod using A6000 GPU using template ```meloncastle/r
 - Deepseek - $15 (developing training set)
 - Electricity - $5.15 (local AI inference)
 
-Total $52 (went over budget self imposed budget rip)
+Total $52 (went over self imposed budget rip)
 
 ### Scores
 ---
-1. 0.558 (local inference)
-2. 0.558 (dsmlp)
-3. 0.607 (dsmlp)
-4. 0.628 (resubmit with normalization)
-5. 0.646 (resubmit with normalization and updated judger)
-6. 0.636 (heavy distilled training set on runpod)
+1. 0.558 -> 0.516 (local inference)
+2. 0.558 -> 0.510 (dsmlp)
+3. 0.607 -> 0.560 (dsmlp)
+4. 0.628 -> 0.565 (resubmit with normalization)
+5. 0.646 -> 0.577 (resubmit with normalization and updated judger)
+6. 0.636 -> 0.569 (heavy distilled training set on runpod)
 
-Current leaderboard rank 40/78 :(
+Current leaderboard rank 40/78 - Final rank 61/110 rip
+
+Teammate's scores: ([branch](https://github.com/lemoncastle/LLM-competition/tree/jmodel))
+1. 0.321 -> 0.289
+2. 0.208 -> 0.175
 
 ### Notes
 ---
@@ -72,9 +76,9 @@ Best ways to improve the model and what I ***should*** have done
 - Work strictly using the base model **FIRST**. The base model is already quite strong and do something like self consistency where you have multiple prompts and you generate a question with each prompt and compare. The current pipeline I have is splitting by MCQ and FRQ but we could've split even more like statistics, arithmetic, or even math level like hard, easy or whatever.
     - I noticed statistics questions like ones that ask about statistical significance answers are all high precision 1e-10+ and our judger scores on precision 1e-8 so you need a lot of precision but generally asking the model to output 1e-8 precision wastes a lot of tokens so having seperate prompts would have been really smart. 
 - I needed a lot more time doing fine tuning, I was only able to run training 5 times.
-- I was never able to get reinforcement learning to work. I don't really know how to code.
+- I was never able to get reinforcement learning to work. Think the issue was I realied on AI too much trying to find code this (still don't understand).
 - Something that hurt was the reliance on AI to help me do research. alot of these concepts aren't terribly hard but there's lots of research papers that go into these and having to sift through them actually hurt my brain because I never understood them. 
 
-I have a teammate jgu0453 but they didn't help unfortunately.
+I have a teammate jgu0453 but their only contribution was panic spamming submissions on last day. His response was "Ive been a bit busy, and the internet is my dorm is absolute garbage."
 
 Nice try though lots to learn we'll get them next time. 
