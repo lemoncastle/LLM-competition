@@ -45,12 +45,7 @@ Training time was done on runpod using A6000 GPU using template ```meloncastle/r
 
 ### Costs
 ---
-- OpenAI - $5 (developing training set)
-- Runpod - $30 (training and inference)
-- Deepseek - $15 (developing training set)
-- Electricity - $5.15 (local AI inference)
-
-Total $52 (went over self imposed budget rip)
+Total $60 (split)
 
 ### Scores
 ---
@@ -60,25 +55,34 @@ Total $52 (went over self imposed budget rip)
 4. 0.628 -> 0.565 (resubmit with normalization)
 5. 0.646 -> 0.577 (resubmit with normalization and updated judger)
 6. 0.636 -> 0.569 (heavy distilled training set on runpod)
+7. **POST SCORES** .703 -> ?? (didn't upload)
 
-Current leaderboard rank 40/78 - Final rank 61/110 rip
+Current leaderboard rank 40/78 -> Final rank 61/110 -> 3 months update """rank""" 40/110 
 
 Teammate's scores: ([branch](https://github.com/lemoncastle/LLM-competition/tree/jmodel))
 1. 0.321 -> 0.289
 2. 0.208 -> 0.175
 
+### 3 Months Update
+---
+So I had $9 left in my runpod account and I have still have access to schools servers and their GPUs so I decided to do another run. It was also haunting me how bad the scores I got were.
+- I used the base model, as I realized that doing lora and supervised fine tuning was making the model forget and it was just a mess to deal with (where I originally got stuck).
+- Use multiple prompts, and be more aggressive, force 1e8 precision for questions.
+    - If response doesn't have a /boxed{} regen again.
+- Post processing remained the same
+
+After just changing some prompts around I got a + .056 bump lol. that would've got me +30 ranks on the leaderboard lol.
+
+Some thing I could improve is doing multiple generations for each question. like I split mcq/frq like I did but mcq has 12 different prompts or something.
+- Or like use a teacher LLM to assign a category to each question like (statistics), or (algebra) so I can write more focused prompts.
+    - Cause I found long prompts waste tokens and the model just thinks about the prompts forever.
+
+Well yeah that's it for this, that generation took probably 20 hours which split 12 hours on DSMLP and the rest on runpod with the money I had left
+
 ### Notes
 ---
 All I could figure out was doing supervised fine tuning.
-- I was having a lot of trouble getting good outputs so I spent lots of time looking at outputs and cleaning dataset, and generated response which was honestly a waste of time as a 'team' of 1 as I quickly ran out of time once I understood what was going on. I also went over my self imposed $50 budget quickly as compute is quite expensive unfort :(
-
-Best ways to improve the model and what I ***should*** have done
-- Work strictly using the base model **FIRST**. The base model is already quite strong and do something like self consistency where you have multiple prompts and you generate a question with each prompt and compare. The current pipeline I have is splitting by MCQ and FRQ but we could've split even more like statistics, arithmetic, or even math level like hard, easy or whatever.
-    - I noticed statistics questions like ones that ask about statistical significance answers are all high precision 1e-10+ and our judger scores on precision 1e-8 so you need a lot of precision but generally asking the model to output 1e-8 precision wastes a lot of tokens so having seperate prompts would have been really smart. 
-- I needed a lot more time doing fine tuning, I was only able to run training 5 times.
-- I was never able to get reinforcement learning to work. Think the issue was I realied on AI too much trying to find code this (still don't understand).
-- Something that hurt was the reliance on AI to help me do research. alot of these concepts aren't terribly hard but there's lots of research papers that go into these and having to sift through them actually hurt my brain because I never understood them. 
-
+- I was having a lot of trouble getting good outputs so I spent lots of time looking at outputs and cleaning dataset, and generated response which was honestly a waste of time as a 'team' of 1 as I quickly ran out of time once I understood what was going on.
 I have a teammate jgu0453 but their only contribution was panic spamming submissions on last day. His response was "Ive been a bit busy, and the internet is my dorm is absolute garbage."
 
 Nice try though lots to learn we'll get them next time. 
